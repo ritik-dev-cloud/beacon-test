@@ -3,179 +3,166 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ultrasonic Hearing Test — Bharat Mandapam spike</title>
+<title>Ultrasonic Hearing Test</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin: 0; background: #0d1117; color: #e6edf3;
-         font: 16px/1.5 -apple-system, system-ui, Segoe UI, Roboto, sans-serif; }
-  header { padding: 16px; background: #11161d; border-bottom: 1px solid #222c37; }
-  h1 { font-size: 18px; margin: 0 0 4px; }
-  header p { margin: 0; color: #9aa7b4; font-size: 13px; }
-  main { padding: 16px; max-width: 720px; margin: 0 auto; }
-  button { width: 100%; padding: 16px; font-size: 18px; font-weight: 600;
-           border: 0; border-radius: 12px; background: #2f81f7; color: #fff; }
-  button:disabled { background: #30363d; color: #8b949e; }
-  .card { background: #11161d; border: 1px solid #222c37; border-radius: 12px;
-          padding: 14px; margin-top: 14px; }
-  .big { font-size: 30px; font-weight: 700; }
-  .muted { color: #9aa7b4; font-size: 13px; }
-  canvas { width: 100%; height: 190px; display: block; background: #0a0e14;
-           border-radius: 10px; margin-top: 8px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-  td { padding: 8px 6px; border-top: 1px solid #1c2530; font-variant-numeric: tabular-nums; }
-  td:last-child { text-align: right; font-weight: 600; }
-  .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 13px; font-weight: 600; }
-  .ok  { background: #113a2a; color: #3fb950; }
-  .weak{ background: #3a3411; color: #d29922; }
-  .no  { background: #3a1d1d; color: #f85149; }
-  code { background: #0a0e14; padding: 1px 5px; border-radius: 5px; }
-  .row { display: flex; justify-content: space-between; gap: 12px; }
+  body { margin:0; background:#0d1117; color:#e6edf3;
+         font:16px/1.5 -apple-system, system-ui, Segoe UI, Roboto, sans-serif; }
+  header { padding:16px; background:#11161d; border-bottom:1px solid #222c37; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  header p { margin:0; color:#9aa7b4; font-size:13px; }
+  main { padding:16px; max-width:720px; margin:0 auto; }
+  button { font:inherit; }
+  .btn { width:100%; padding:16px; font-size:18px; font-weight:600; border:0; border-radius:12px;
+         background:#2f81f7; color:#fff; }
+  .btn:disabled { background:#30363d; color:#8b949e; }
+  .card { background:#11161d; border:1px solid #222c37; border-radius:12px; padding:14px; margin-top:14px; }
+  .hero .lab { color:#9aa7b4; font-size:12px; text-transform:uppercase; letter-spacing:.1em; }
+  .hero .big { font-size:40px; font-weight:700; line-height:1.1; font-variant-numeric:tabular-nums; }
+  .hero .big.on { color:#3fb950; } .hero .big.off { color:#6e7d8a; }
+  .row { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+  .muted { color:#9aa7b4; font-size:13px; }
+  .mono { font-variant-numeric:tabular-nums; }
+  canvas { width:100%; height:190px; display:block; background:#0a0e14; border-radius:10px; margin-top:8px; }
+  table { width:100%; border-collapse:collapse; margin-top:6px; }
+  td { padding:8px 6px; border-top:1px solid #1c2530; font-variant-numeric:tabular-nums; }
+  td:last-child { text-align:right; font-weight:600; }
+  .pill { display:inline-block; padding:2px 9px; border-radius:999px; font-size:13px; font-weight:600; }
+  .ok{ background:#113a2a; color:#3fb950; } .weak{ background:#3a3411; color:#d29922; }
+  .no{ background:#20262e; color:#7d8b98; }
+  .reset { width:auto; padding:8px 14px; font-size:14px; border-radius:9px; background:#20262e; color:#e6edf3; }
+  code { background:#0a0e14; padding:1px 5px; border-radius:5px; }
+  ol { margin:6px 0 0; padding-left:20px; } li { margin:3px 0; }
 </style>
 </head>
 <body>
 <header>
   <h1>Ultrasonic hearing test</h1>
-  <p>Play the ESP32 tone staircase near this phone, then read the highest tone it detects.</p>
+  <p>Play <b>one</b> tone on the Mac and watch the live peak. That is the honest reading.</p>
 </header>
 <main>
-  <button id="start">Start the test (allow microphone)</button>
+  <button id="start" class="btn">Start the test (allow microphone)</button>
   <div id="err" class="card" hidden style="border-color:#5a1d1d"></div>
 
-  <div class="card">
-    <div class="muted">Highest tone this phone reliably detects</div>
-    <div id="ceiling" class="big">— kHz</div>
-    <div class="row" style="margin-top:8px">
-      <span class="muted">Live peak (15–22 kHz): <b id="peak">—</b></span>
-      <span class="muted">Mic sample rate: <b id="sr">—</b></span>
+  <div id="live" hidden>
+    <div class="card hero">
+      <div class="lab">Live peak right now (15–22 kHz)</div>
+      <div id="peak" class="big off">— kHz</div>
+      <div class="row" style="margin-top:6px">
+        <span class="muted">Highest clean tone seen: <b id="ceil" class="mono">—</b></span>
+        <button class="reset" onclick="resetCeil()">Reset</button>
+      </div>
     </div>
-  </div>
 
-  <canvas id="spec" width="700" height="190"></canvas>
+    <canvas id="spec" width="700" height="190"></canvas>
 
-  <div class="card">
-    <div class="muted" style="margin-bottom:4px">Per-tone detection (updates live)</div>
-    <table id="bands"></table>
-  </div>
+    <div class="card">
+      <div class="muted" style="margin-bottom:4px">Per-tone — is a real tone present <i>right now</i></div>
+      <table id="bands"></table>
+    </div>
 
-  <div class="card">
-    <div class="muted">Applied microphone settings <span id="proc"></span></div>
-    <div id="settings" class="muted" style="margin-top:6px; word-break:break-word">—</div>
+    <div class="card">
+      <div class="row"><span class="muted">Mic sample rate</span><b id="sr" class="mono">—</b></div>
+      <div class="row" style="margin-top:6px"><span class="muted">Noise floor</span><b id="floor" class="mono">—</b></div>
+      <div class="row" style="margin-top:6px"><span class="muted">Processing</span><span id="proc"></span></div>
+      <div class="muted" style="margin-top:8px; word-break:break-word" id="settings"></div>
+    </div>
+
+    <div class="card">
+      <div class="muted"><b>How to read it:</b></div>
+      <ol class="muted">
+        <li>On the Mac, tap <b>one</b> frequency (e.g. 18.0) and hold it — don't use Auto.</li>
+        <li>The <b>Live peak</b> here should jump to that frequency and a green pill appears.</li>
+        <li>Now try 19.0, then 20.0. If the Live peak <b>stops rising</b> and sticks (e.g. at 18.5), that number is this phone's ceiling.</li>
+        <li>Stop the tone — the Live peak should fall back to "—". If bands stay green with <b>no</b> tone playing, that's noise, not a real tone.</li>
+      </ol>
+    </div>
   </div>
 </main>
 
 <script>
-const TARGETS = [17000,17500,18000,18500,19000,19500,20000];
-const DETECT_DB = -78;   // above this = clearly present
-const WEAK_DB   = -85;   // above this = marginal
-let audioCtx, analyser, freqData, srHz, binHz, running = false;
-let everSeen = {};       // freq -> best dB seen this session
-TARGETS.forEach(f => everSeen[f] = -140);
+const TARGETS=[16000,17000,17500,18000,18500,19000,19500,20000];
+const PROMINENCE=12;   // dB a real tone must stand above the local noise floor
+const ABS_FLOOR=-95;   // and above this absolute level
+let analyser, freqData, srHz, binHz, running=false, ceilHz=0;
 
-const $ = id => document.getElementById(id);
+const $=id=>document.getElementById(id);
 
-$('start').addEventListener('click', async () => {
-  try {
-    // 1) mic with all phone DSP requested OFF (we want the raw ultrasonic energy)
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { noiseSuppression:false, echoCancellation:false,
-               autoGainControl:false, channelCount:1 }, video:false });
-
-    // 2) AudioContext must be created + resumed inside this tap (iOS rule)
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    await audioCtx.resume();
-    srHz = audioCtx.sampleRate;
-    $('sr').textContent = (srHz/1000).toFixed(1) + ' kHz';
-
-    const src = audioCtx.createMediaStreamSource(stream);
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 8192;                 // ~5.9 Hz per bin @ 48 kHz
-    analyser.smoothingTimeConstant = 0.3;
-    binHz = srHz / analyser.fftSize;
-    freqData = new Float32Array(analyser.frequencyBinCount);
-    src.connect(analyser);
-
-    // report what the browser actually applied
-    const st = stream.getAudioTracks()[0].getSettings();
-    $('settings').textContent = JSON.stringify(st);
-    const off = ('noiseSuppression' in st) &&
-                !st.noiseSuppression && !st.echoCancellation && !st.autoGainControl;
-    $('proc').innerHTML = off ? '<span class="pill ok">DSP off</span>'
-                              : '<span class="pill weak">DSP may still be on</span>';
-
-    $('start').disabled = true;
-    $('start').textContent = 'Listening…';
-    running = true;
-    buildTable();
-    loop();
-  } catch (e) {
-    const box = $('err'); box.hidden = false;
-    box.innerHTML = '<b>Could not start:</b> ' + (e && e.message ? e.message : e) +
-      '<br><span class="muted">Must be opened over <code>https://</code>, and microphone must be allowed.</span>';
+$('start').addEventListener('click', async ()=>{
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression:false,
+      echoCancellation:false, autoGainControl:false, channelCount:1}, video:false});
+    const ctx=new (window.AudioContext||window.webkitAudioContext)(); await ctx.resume();
+    srHz=ctx.sampleRate; $('sr').textContent=(srHz/1000).toFixed(1)+' kHz';
+    const src=ctx.createMediaStreamSource(stream);
+    analyser=ctx.createAnalyser(); analyser.fftSize=8192; analyser.smoothingTimeConstant=0.4;
+    binHz=srHz/analyser.fftSize; freqData=new Float32Array(analyser.frequencyBinCount); src.connect(analyser);
+    const st=stream.getAudioTracks()[0].getSettings();
+    $('settings').textContent=JSON.stringify(st);
+    const off=('noiseSuppression'in st)&&!st.noiseSuppression&&!st.echoCancellation&&!st.autoGainControl;
+    $('proc').innerHTML=off?'<span class="pill ok">DSP off</span>':'<span class="pill weak">may still be on</span>';
+    $('start').hidden=true; $('live').hidden=false; buildTable(); loop();
+  }catch(e){
+    const b=$('err'); b.hidden=false;
+    b.innerHTML='<b>Could not start:</b> '+(e&&e.message?e.message:e)+
+      '<br><span class="muted">Must be opened over <code>https://</code> with the microphone allowed.</span>';
   }
 });
 
-function dbAround(freq, halfHz) {
-  const lo = Math.max(0, Math.floor((freq-halfHz)/binHz));
-  const hi = Math.min(freqData.length-1, Math.ceil((freq+halfHz)/binHz));
-  let m = -140; for (let i=lo;i<=hi;i++) if (freqData[i] > m) m = freqData[i];
-  return m;
-}
-function classDb(db){ return db>=DETECT_DB?'ok':db>=WEAK_DB?'weak':'no'; }
-function labelDb(db){ return db>=DETECT_DB?'detected':db>=WEAK_DB?'weak':'not heard'; }
+function resetCeil(){ ceilHz=0; $('ceil').textContent='—'; }
+function buildTable(){ $('bands').innerHTML=TARGETS.map(f=>
+  `<tr><td>${(f/1000).toFixed(1)} kHz</td><td id="v-${f}"><span class="pill no">—</span></td></tr>`).join(''); }
 
-function buildTable(){
-  $('bands').innerHTML = TARGETS.map(f =>
-    `<tr><td>${(f/1000).toFixed(1)} kHz</td>
-         <td id="v-${f}"><span class="pill no">—</span></td></tr>`).join('');
+function bandsMedian(){ // robust noise floor over 14-22 kHz
+  const lo=Math.floor(14000/binHz), hi=Math.min(freqData.length-1,Math.ceil(22000/binHz));
+  const a=[]; for(let i=lo;i<=hi;i++) a.push(freqData[i]); a.sort((x,y)=>x-y);
+  return a[Math.floor(a.length*0.5)];
 }
+function peakAround(f){ const h=120, lo=Math.max(0,Math.floor((f-h)/binHz)),
+  hi=Math.min(freqData.length-1,Math.ceil((f+h)/binHz)); let m=-140;
+  for(let i=lo;i<=hi;i++) if(freqData[i]>m)m=freqData[i]; return m; }
 
-const canvas = $('spec'), ctx = canvas.getContext('2d');
+const canvas=$('spec'), ctx=canvas.getContext('2d');
 function loop(){
-  if (!running) return;
+  if(!running && analyser){ running=true; }
   analyser.getFloatFrequencyData(freqData);
+  const floor=bandsMedian();
+  $('floor').textContent=floor.toFixed(0)+' dB';
 
   // live peak in 15-22 kHz
-  let peakDb=-140, peakHz=0;
-  const lo=Math.floor(15000/binHz), hi=Math.min(freqData.length-1,Math.ceil(22000/binHz));
-  for (let i=lo;i<=hi;i++) if (freqData[i]>peakDb){peakDb=freqData[i];peakHz=i*binHz;}
-  $('peak').textContent = peakDb>-110 ? (peakHz/1000).toFixed(2)+' kHz ('+peakDb.toFixed(0)+' dB)' : '—';
+  let pDb=-140,pHz=0; const lo=Math.floor(15000/binHz),hi=Math.min(freqData.length-1,Math.ceil(22000/binHz));
+  for(let i=lo;i<=hi;i++) if(freqData[i]>pDb){pDb=freqData[i];pHz=i*binHz;}
+  const peakReal=(pDb>floor+PROMINENCE)&&(pDb>ABS_FLOOR);
+  const pk=$('peak');
+  if(peakReal){ pk.textContent=(pHz/1000).toFixed(2)+' kHz'; pk.className='big on'; }
+  else { pk.textContent='— kHz'; pk.className='big off'; }
 
-  // per-target bands + track highest ever detected
-  let ceiling = 0;
-  for (const f of TARGETS){
-    const db = dbAround(f, 120);
-    if (db > everSeen[f]) everSeen[f] = db;
-    if (everSeen[f] >= DETECT_DB) ceiling = Math.max(ceiling, f);
-    const cell = $('v-'+f);
-    if (cell) cell.innerHTML = `<span class="pill ${classDb(db)}">${labelDb(db)} ${db>-110?db.toFixed(0)+' dB':''}</span>`;
+  // per-band: prominent tone present right now?
+  for(const f of TARGETS){
+    const db=peakAround(f); const present=(db>floor+PROMINENCE)&&(db>ABS_FLOOR);
+    if(present && f>ceilHz){ ceilHz=f; $('ceil').textContent=(f/1000).toFixed(1)+' kHz'; }
+    const c=$('v-'+f);
+    if(c) c.innerHTML = present
+      ? `<span class="pill ok">present ${db.toFixed(0)} dB</span>`
+      : `<span class="pill no">quiet ${db>-110?db.toFixed(0)+' dB':''}</span>`;
   }
-  $('ceiling').textContent = ceiling ? (ceiling/1000).toFixed(1)+' kHz' : '— kHz';
-
-  drawSpectrum();
+  draw(floor);
   requestAnimationFrame(loop);
 }
 
-function drawSpectrum(){
-  const W=canvas.width, H=canvas.height;
-  ctx.clearRect(0,0,W,H);
-  const fMin=14000, fMax=22000;
-  const x = f => (f-fMin)/(fMax-fMin)*W;
-  const y = db => H - Math.max(0, Math.min(1,(db+120)/90))*H;
-  // gridlines at each target
+function draw(floor){
+  const W=canvas.width,H=canvas.height; ctx.clearRect(0,0,W,H);
+  const fMin=14000,fMax=22000, x=f=>(f-fMin)/(fMax-fMin)*W, y=d=>H-Math.max(0,Math.min(1,(d+120)/90))*H;
   ctx.font='11px sans-serif';
-  for (const f of TARGETS){
-    ctx.strokeStyle='#1c2530'; ctx.beginPath(); ctx.moveTo(x(f),0); ctx.lineTo(x(f),H); ctx.stroke();
-    ctx.fillStyle='#5b6773'; ctx.fillText((f/1000).toFixed(1), x(f)-8, H-4);
-  }
-  // threshold line
-  ctx.strokeStyle='#3fb95055'; ctx.beginPath(); ctx.moveTo(0,y(DETECT_DB)); ctx.lineTo(W,y(DETECT_DB)); ctx.stroke();
-  // spectrum curve
+  for(const f of TARGETS){ ctx.strokeStyle='#1c2530'; ctx.beginPath(); ctx.moveTo(x(f),0); ctx.lineTo(x(f),H); ctx.stroke();
+    ctx.fillStyle='#5b6773'; ctx.fillText((f/1000).toFixed(1), x(f)-8, H-4); }
+  // noise floor + prominence line
+  ctx.strokeStyle='#8b949e55'; ctx.beginPath(); ctx.moveTo(0,y(floor)); ctx.lineTo(W,y(floor)); ctx.stroke();
+  ctx.strokeStyle='#3fb95055'; ctx.beginPath(); ctx.moveTo(0,y(floor+PROMINENCE)); ctx.lineTo(W,y(floor+PROMINENCE)); ctx.stroke();
   ctx.strokeStyle='#2f81f7'; ctx.lineWidth=2; ctx.beginPath();
-  const lo=Math.floor(fMin/binHz), hi=Math.min(freqData.length-1,Math.ceil(fMax/binHz));
-  let first=true;
-  for (let i=lo;i<=hi;i++){ const px=x(i*binHz), py=y(freqData[i]);
-    if(first){ctx.moveTo(px,py);first=false;} else ctx.lineTo(px,py); }
+  const lo=Math.floor(fMin/binHz),hi=Math.min(freqData.length-1,Math.ceil(fMax/binHz)); let first=true;
+  for(let i=lo;i<=hi;i++){ const px=x(i*binHz),py=y(freqData[i]); if(first){ctx.moveTo(px,py);first=false;}else ctx.lineTo(px,py); }
   ctx.stroke();
 }
 </script>
