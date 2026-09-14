@@ -59,7 +59,7 @@
   </div>
 
   <div class="card">
-    <div class="row"><b>Diagnostics log</b><button id="copy" class="btn2">Copy log</button></div>
+    <div class="row"><b>Diagnostics log</b><span style="display:flex;gap:8px"><button id="download" class="btn2" style="background:#1f6feb">Download</button><button id="copy" class="btn2">Copy log</button></span></div>
     <div id="verdict" class="verdict muted" style="margin-top:8px">Waiting to start…</div>
     <textarea id="log" readonly></textarea>
     <div class="muted" style="margin-top:6px">Tip: play <b>1 kHz</b>, then <b>18</b>, <b>19</b>, <b>20</b> on the Mac (hold each ~4 s). Then Copy log.</div>
@@ -88,6 +88,15 @@ $('copy').addEventListener('click', ()=>{
   const done=()=>{ $('copy').textContent='Copied ✓'; setTimeout(()=>$('copy').textContent='Copy log',1500); };
   if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done).catch(()=>{ $('log').select(); done(); }); }
   else { $('log').select(); document.execCommand&&document.execCommand('copy'); done(); }
+});
+
+$('download').addEventListener('click', ()=>{
+  const blob=new Blob([lines.join('\n')||'(empty log)'], {type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='spike-log.txt';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 3000);
+  $('download').textContent='Saved ✓'; setTimeout(()=>$('download').textContent='Download',1500);
 });
 
 $('start').addEventListener('click', async ()=>{
