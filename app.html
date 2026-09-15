@@ -4,33 +4,38 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <title>Office Wayfinding · Demo</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00AEEF">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
-  :root{ --brand:#00AEEF; --brand-ink:#007bab; --ink:#0e1b26; --muted:#5f7284;
-    --bg:#eef3f6; --panel:#ffffff; --line:#e2e9ee; --line2:#d3dde4; }
+  :root{ --brand:#00AEEF; --brand-ink:#007bab; --ink:#0e1b26; --muted:#5f7284; --bg:#eef3f6; --panel:#fff; --line:#e2e9ee; --line2:#d3dde4; }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ height:100%; }
   body{ margin:0; background:var(--bg); color:var(--ink); font-family:Manrope,system-ui,-apple-system,sans-serif; overscroll-behavior:none; }
   .app{ height:100dvh; display:flex; flex-direction:column; max-width:520px; margin:0 auto; }
-  header{ background:var(--panel); border-bottom:1px solid var(--line); padding:12px 16px; display:flex; align-items:center; gap:12px; }
+  header{ background:var(--panel); border-bottom:1px solid var(--line); padding:12px 16px; display:flex; align-items:center; gap:12px; z-index:5; }
   .logo{ width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,var(--brand),#0e8fc4); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:15px; }
   .htxt b{ display:block; font-size:15px; font-weight:700; } .htxt span{ font-size:11.5px; color:var(--muted); }
   .status{ margin-left:auto; display:flex; align-items:center; gap:7px; background:#e7f7fe; color:var(--brand-ink); padding:6px 11px; border-radius:999px; font-size:12.5px; font-weight:600; }
   .dot{ width:8px; height:8px; border-radius:50%; background:var(--brand); animation:pulse 1.8s infinite; }
   @keyframes pulse{ 0%{box-shadow:0 0 0 0 rgba(0,174,239,.45)} 70%{box-shadow:0 0 0 8px rgba(0,174,239,0)} 100%{box-shadow:0 0 0 0 rgba(0,174,239,0)} }
-  .mapwrap{ flex:1; position:relative; overflow:hidden; }
-  svg.map{ width:100%; height:100%; display:block; }
-  .zoneFill{ transition:opacity .3s, stroke-width .3s; }
-  .youdot{ transition:cx .6s ease, cy .6s ease; } .youhalo{ transition:cx .6s ease, cy .6s ease; }
-  .sheet{ background:var(--panel); border-top-left-radius:20px; border-top-right-radius:20px; box-shadow:0 -8px 24px rgba(14,27,38,.08); padding:14px 16px calc(16px + env(safe-area-inset-bottom)); }
+  .mapwrap{ flex:1; position:relative; }
+  #map{ position:absolute; inset:0; background:#eef3f6; }
+  .leaflet-container{ background:#eef3f6; font-family:inherit; }
+  .poiLbl{ background:#fff; border:1px solid var(--line2); border-radius:7px; box-shadow:0 1px 3px rgba(0,0,0,.12); font-size:11px; font-weight:600; color:var(--ink); padding:2px 7px; }
+  .poiLbl::before{ display:none; }
+  .youpulse{ width:16px; height:16px; border-radius:50%; background:rgba(0,174,239,.28); animation:halo 1.6s infinite; }
+  @keyframes halo{ 0%{transform:scale(.6);opacity:.9} 100%{transform:scale(2.4);opacity:0} }
+  .sheet{ background:var(--panel); border-top-left-radius:20px; border-top-right-radius:20px; box-shadow:0 -8px 24px rgba(14,27,38,.08); padding:14px 16px calc(16px + env(safe-area-inset-bottom)); z-index:5; }
   .grab{ width:38px; height:4px; border-radius:2px; background:var(--line2); margin:0 auto 12px; }
   .here{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
   .here .ring{ width:38px; height:38px; border-radius:50%; border:3px solid var(--brand); display:flex; align-items:center; justify-content:center; }
   .here .ring i{ width:12px; height:12px; border-radius:50%; background:var(--brand); }
   .here b{ font-size:16px; font-weight:700; } .here span{ display:block; font-size:12px; color:var(--muted); }
   .label{ font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
-  .chips{ display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; } .chips::-webkit-scrollbar{ display:none; }
+  .chips{ display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; } .chips::-webkit-scrollbar{ display:none; }
   .chip{ flex:0 0 auto; border:1px solid var(--line2); background:#fff; border-radius:12px; padding:9px 13px; font-size:13.5px; font-weight:600; color:var(--ink); display:flex; align-items:center; gap:7px; }
   .chip.sel{ border-color:var(--brand); background:#e9f8fe; color:var(--brand-ink); } .chip .sw{ width:9px; height:9px; border-radius:50%; }
   .route{ margin-top:12px; background:#f4f8fb; border:1px solid var(--line); border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:12px; }
@@ -59,49 +64,10 @@
 <div class="app" id="app" hidden>
   <header>
     <div class="logo">CM</div>
-    <div class="htxt"><b>Office wayfinding</b><span>Live demo · sound-based</span></div>
+    <div class="htxt"><b>Office wayfinding</b><span>Leaflet · A* routing · PWA</span></div>
     <div class="status"><span class="dot"></span><span id="statusText">Locating…</span></div>
   </header>
-
-  <div class="mapwrap">
-    <svg class="map" id="map" viewBox="0 0 360 470" preserveAspectRatio="xMidYMid meet" aria-label="Office floor with three partitions">
-      <rect x="0" y="0" width="360" height="470" fill="#eef3f6"/>
-      <rect x="22" y="22" width="316" height="426" rx="14" fill="#ffffff" stroke="#d3dde4" stroke-width="2"/>
-
-      <!-- partition zones -->
-      <rect id="fill-recep" class="zoneFill" x="28" y="28" width="97"  height="414" rx="8" fill="#27ae60" stroke="#27ae60" stroke-width="1" opacity="0.07"/>
-      <rect id="fill-work"  class="zoneFill" x="131" y="28" width="102" height="414" rx="8" fill="#00AEEF" stroke="#00AEEF" stroke-width="1" opacity="0.10"/>
-      <rect id="fill-meet"  class="zoneFill" x="239" y="28" width="93"  height="414" rx="8" fill="#7b61ff" stroke="#7b61ff" stroke-width="1" opacity="0.10"/>
-
-      <text x="76"  y="45" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1f8a4c">RECEPTION</text>
-      <text x="182" y="45" text-anchor="middle" font-size="10.5" font-weight="700" fill="#007bab">WORK AREA · 18 kHz</text>
-      <text x="285" y="45" text-anchor="middle" font-size="10.5" font-weight="700" fill="#5b46c9">MEETING · 19 kHz</text>
-
-      <!-- partition walls with door gaps -->
-      <g stroke="#aebcc8" stroke-width="3" stroke-linecap="round">
-        <line x1="128" y1="30" x2="128" y2="200"/><line x1="128" y1="250" x2="128" y2="440"/>
-        <line x1="236" y1="30" x2="236" y2="200"/><line x1="236" y1="250" x2="236" y2="440"/>
-      </g>
-
-      <!-- furniture -->
-      <g fill="#eaf1f5" stroke="#d3dde4">
-        <rect x="42" y="300" width="66" height="18" rx="4"/>
-        <rect x="145" y="92" width="34" height="26" rx="3"/><rect x="188" y="92" width="34" height="26" rx="3"/>
-        <rect x="145" y="152" width="34" height="26" rx="3"/><rect x="188" y="152" width="34" height="26" rx="3"/>
-        <rect x="252" y="150" width="64" height="108" rx="8"/>
-      </g>
-
-      <path id="routeLine" d="" fill="none" stroke="#00AEEF" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="2 8" hidden/>
-      <g id="pois" font-size="9" font-weight="600" fill="#0e1b26" text-anchor="middle"></g>
-      <g id="you" hidden>
-        <circle id="youHalo" class="youhalo" cx="182" cy="235" r="16" fill="#00AEEF" opacity="0.18"/>
-        <circle id="youDot" class="youdot" cx="182" cy="235" r="8" fill="#00AEEF" stroke="#fff" stroke-width="2.5"/>
-      </g>
-      <rect x="52" y="442" width="44" height="6" rx="3" fill="#27ae60"/>
-      <text x="74" y="461" text-anchor="middle" font-size="9.5" font-weight="600" fill="#5f7284">ENTRANCE</text>
-    </svg>
-  </div>
-
+  <div class="mapwrap"><div id="map"></div></div>
   <div class="sheet">
     <div class="grab"></div>
     <div class="here">
@@ -118,61 +84,140 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-/* ===== CONFIG — swap when your real office sketch arrives =====
-   2 beacons for the first test (Work Area = 18 kHz, Meeting = 19 kHz).
-   Reception has no beacon yet — add one (e.g. 18.5 kHz) to light it up.  */
+/* ============ CONFIG — swap when your real office sketch/plan arrives ============
+   Coordinates are in floor-plan pixels (x→right, y→down), W×H below.
+   Two beacons for the first test: Work Area = 18 kHz, Meeting = 19 kHz.        */
+const W=360, H=470;
 const BEACONS = [ {freq:18000, zone:"work"}, {freq:19000, zone:"meet"} ];
 const ZONES = {
-  recep: { name:"Reception",    x:76,  y:235 },
-  work:  { name:"Work Area",    x:182, y:235 },
-  meet:  { name:"Meeting Room", x:285, y:235 },
+  recep: { name:"Reception",    cx:76,  cy:235, rect:[28,28,125,442] },
+  work:  { name:"Work Area",    cx:182, cy:235, rect:[131,28,233,442] },
+  meet:  { name:"Meeting Room", cx:285, cy:235, rect:[239,28,332,442] },
+};
+const NODES = {  /* walkable graph for A* routing */
+  recep:{x:76,y:235}, work:{x:182,y:235}, meet:{x:285,y:235},
+  entrance:{x:74,y:405}, pantry:{x:74,y:95}, wash:{x:285,y:95}, manager:{x:285,y:400},
+};
+const EDGES = {
+  recep:["work","entrance","pantry"], work:["recep","meet"], meet:["work","wash","manager"],
+  entrance:["recep"], pantry:["recep"], wash:["meet"], manager:["meet"],
 };
 const POIS = [
-  { id:"entrance", name:"Entrance", x:74,  y:405, color:"#27ae60" },
-  { id:"pantry",   name:"Pantry",   x:74,  y:95,  color:"#f2994a" },
-  { id:"wash",     name:"Washroom", x:285, y:95,  color:"#2d9cdb" },
-  { id:"manager",  name:"Manager",  x:285, y:400, color:"#9b51e0" },
+  { id:"entrance", name:"Entrance", color:"#27ae60" },
+  { id:"pantry",   name:"Pantry",   color:"#f2994a" },
+  { id:"wash",     name:"Washroom", color:"#2d9cdb" },
+  { id:"manager",  name:"Manager",  color:"#9b51e0" },
 ];
-/* ============================================================== */
+/* ============================================================================== */
 
-const PROMINENCE=12, ABS_FLOOR=-95, LEAD_DB=3, COMMIT_FRAMES=22, HOLD_MS=3500;
+/* ---- static floor-plan drawing (swap this for a real plan image later) ---- */
+function floorplanSVG(){
+  const desk=(x,y)=>`<rect x="${x}" y="${y}" width="34" height="26" rx="3" fill="#eaf1f5" stroke="#d3dde4"/>`;
+  return `<svg xmlns='http://www.w3.org/2000/svg' width='${W}' height='${H}' viewBox='0 0 ${W} ${H}'>
+    <rect width='${W}' height='${H}' fill='#eef3f6'/>
+    <rect x='22' y='22' width='316' height='426' rx='14' fill='#ffffff' stroke='#d3dde4' stroke-width='2'/>
+    <rect x='28'  y='28' width='97'  height='414' rx='8' fill='#27ae60' opacity='0.06'/>
+    <rect x='131' y='28' width='102' height='414' rx='8' fill='#00AEEF' opacity='0.07'/>
+    <rect x='239' y='28' width='93'  height='414' rx='8' fill='#7b61ff' opacity='0.07'/>
+    <text x='76'  y='45' text-anchor='middle' font-family='Arial' font-size='10.5' font-weight='700' fill='#1f8a4c'>RECEPTION</text>
+    <text x='182' y='45' text-anchor='middle' font-family='Arial' font-size='10.5' font-weight='700' fill='#007bab'>WORK AREA · 18 kHz</text>
+    <text x='285' y='45' text-anchor='middle' font-family='Arial' font-size='10.5' font-weight='700' fill='#5b46c9'>MEETING · 19 kHz</text>
+    <g stroke='#aebcc8' stroke-width='3' stroke-linecap='round'>
+      <line x1='128' y1='30' x2='128' y2='200'/><line x1='128' y1='250' x2='128' y2='440'/>
+      <line x1='236' y1='30' x2='236' y2='200'/><line x1='236' y1='250' x2='236' y2='440'/>
+    </g>
+    <rect x='42' y='300' width='66' height='18' rx='4' fill='#eaf1f5' stroke='#d3dde4'/>
+    ${desk(145,92)}${desk(188,92)}${desk(145,152)}${desk(188,152)}
+    <rect x='252' y='150' width='64' height='108' rx='8' fill='#eaf1f5' stroke='#d3dde4'/>
+    <rect x='52' y='442' width='44' height='6' rx='3' fill='#27ae60'/>
+    <text x='74' y='461' text-anchor='middle' font-family='Arial' font-size='9.5' font-weight='600' fill='#5f7284'>ENTRANCE</text>
+  </svg>`;
+}
+
+/* ---- tiny A* over the walkable graph ---- */
+function dist(a,b){ return Math.hypot(NODES[a].x-NODES[b].x, NODES[a].y-NODES[b].y); }
+function aStar(start, goal){
+  if(!NODES[start]||!NODES[goal]) return [];
+  const open=new Set([start]), came={}, g={[start]:0}, f={[start]:dist(start,goal)};
+  while(open.size){
+    let cur=null,best=1e9; for(const n of open){ if(f[n]<best){best=f[n];cur=n;} }
+    if(cur===goal){ const p=[cur]; while(came[p[0]]) p.unshift(came[p[0]]); return p; }
+    open.delete(cur);
+    for(const nb of (EDGES[cur]||[])){
+      const t=g[cur]+dist(cur,nb);
+      if(t<(g[nb]??1e9)){ came[nb]=cur; g[nb]=t; f[nb]=t+dist(nb,goal); open.add(nb); }
+    }
+  }
+  return [start,goal];
+}
+
+/* ---- app state ---- */
+const $=id=>document.getElementById(id);
+let map, P, hi, you, halo, routeLine, poiLayer;
 let analyser, freqData, srHz, binHz;
 let committedZone=null, candidate=null, candCount=0, lastHeard=0, destPoi=null;
-const $=id=>document.getElementById(id);
+const PROMINENCE=12, ABS_FLOOR=-95, LEAD_DB=3, COMMIT_FRAMES=22, HOLD_MS=3500;
 
-(function(){ const g=$("pois"), chips=$("chips");
+function initMap(){
+  map=L.map('map',{ crs:L.CRS.Simple, minZoom:-2, maxZoom:2, zoomControl:false, attributionControl:false, zoomSnap:0.25 });
+  P=(x,y)=>L.latLng(H-y, x);                                   // pixel(x,y) -> Leaflet latLng
+  const bounds=[[0,0],[H,W]];
+  const url='data:image/svg+xml,'+encodeURIComponent(floorplanSVG());
+  L.imageOverlay(url, bounds).addTo(map);
+  map.fitBounds(bounds); map.setMaxBounds(L.latLngBounds(bounds).pad(0.15));
+
+  // current-zone highlight (repositioned on setZone)
+  hi=L.rectangle(zoneBounds("work"), {color:"#00AEEF", weight:2.5, fill:true, fillColor:"#00AEEF", fillOpacity:0.16}).addTo(map);
+
+  // POI markers
+  poiLayer=L.layerGroup().addTo(map);
   POIS.forEach(p=>{
-    const pin=document.createElementNS("http://www.w3.org/2000/svg","g");
-    pin.innerHTML=`<circle cx="${p.x}" cy="${p.y}" r="6.5" fill="${p.color}" stroke="#fff" stroke-width="2"/><text x="${p.x}" y="${p.y-11}">${p.name}</text>`;
-    g.appendChild(pin);
-    const c=document.createElement("button"); c.className="chip";
-    c.innerHTML=`<span class="sw" style="background:${p.color}"></span>${p.name}`;
-    c.onclick=()=>selectDest(p,c); chips.appendChild(c);
+    const m=L.circleMarker(P(NODES[p.id].x,NODES[p.id].y), {radius:7,color:"#fff",weight:2,fillColor:p.color,fillOpacity:1}).addTo(poiLayer);
+    m.bindTooltip(p.name,{permanent:true,direction:"top",offset:[0,-6],className:"poiLbl"});
+    m.on("click",()=>selectDest(p));
   });
-})();
 
-function selectDest(p,el){ destPoi=(destPoi&&destPoi.id===p.id)?null:p;
-  document.querySelectorAll(".chip").forEach(c=>c.classList.remove("sel")); if(destPoi)el.classList.add("sel"); drawRoute(); }
-function drawRoute(){ const rl=$("routeLine"),box=$("routeBox");
-  if(!destPoi||!committedZone){ rl.hidden=true; box.hidden=true; return; }
-  const from=ZONES[committedZone];
-  rl.setAttribute("d",`M ${from.x} ${from.y} L 182 235 L ${destPoi.x} ${destPoi.y}`); rl.hidden=false;
-  const dist=Math.round(Math.hypot(destPoi.x-from.x,destPoi.y-from.y)*0.12)+3;
-  box.hidden=false; $("routeName").textContent="Walk to "+destPoi.name;
-  $("routeMeta").textContent="~"+dist+" m · about "+Math.max(1,Math.round(dist/50))+" min"; }
+  // route + you-are-here
+  routeLine=L.polyline([], {color:"#00AEEF", weight:4, dashArray:"2 9", lineCap:"round"}).addTo(map);
+  halo=L.marker(P(182,235), {icon:L.divIcon({className:"", html:'<div class="youpulse"></div>', iconSize:[16,16]}), interactive:false}).addTo(map);
+  you=L.circleMarker(P(182,235), {radius:8,color:"#fff",weight:2.5,fillColor:"#00AEEF",fillOpacity:1}).addTo(map);
+  setTimeout(()=>map.invalidateSize(),150);
+}
+function zoneBounds(z){ const r=ZONES[z].rect; return L.latLngBounds(P(r[0],r[1]), P(r[2],r[3])); }
+
+/* chips */
+POIS.forEach(p=>{ const c=document.createElement("button"); c.className="chip"; c.dataset.id=p.id;
+  c.innerHTML=`<span class="sw" style="background:${p.color}"></span>${p.name}`; c.onclick=()=>selectDest(p); $("chips").appendChild(c); });
+
+function selectDest(p){
+  destPoi=(destPoi&&destPoi.id===p.id)?null:p;
+  document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("sel", destPoi&&c.dataset.id===destPoi.id));
+  drawRoute();
+}
+function drawRoute(){
+  if(!destPoi||!committedZone){ routeLine.setLatLngs([]); $("routeBox").hidden=true; return; }
+  const path=aStar(committedZone, destPoi.id);
+  routeLine.setLatLngs(path.map(id=>P(NODES[id].x,NODES[id].y)));
+  let d=0; for(let i=1;i<path.length;i++) d+=dist(path[i-1],path[i]);
+  const m=Math.max(3, Math.round(d*0.12));
+  $("routeBox").hidden=false; $("routeName").textContent="Walk to "+destPoi.name;
+  $("routeMeta").textContent="~"+m+" m · about "+Math.max(1,Math.round(m/50))+" min";
+}
 $("clearRoute").onclick=()=>{ destPoi=null; document.querySelectorAll(".chip").forEach(c=>c.classList.remove("sel")); drawRoute(); };
 
-function setZone(z){ committedZone=z; const zn=ZONES[z];
-  $("you").hidden=false;
-  $("youDot").setAttribute("cx",zn.x); $("youDot").setAttribute("cy",zn.y);
-  $("youHalo").setAttribute("cx",zn.x); $("youHalo").setAttribute("cy",zn.y);
+function setZone(z){
+  committedZone=z; const zn=ZONES[z];
+  you.setLatLng(P(zn.cx,zn.cy)); halo.setLatLng(P(zn.cx,zn.cy));
+  hi.setBounds(zoneBounds(z));
   $("statusText").textContent="You're in "+zn.name;
   $("hereZone").textContent=zn.name; $("hereHint").textContent="You are here";
-  Object.keys(ZONES).forEach(k=>{ const el=$("fill-"+k); if(el){ el.setAttribute("opacity",k===z?"0.28":"0.07"); el.setAttribute("stroke-width",k===z?"2.5":"1"); }});
-  drawRoute(); }
+  drawRoute();
+}
 function setSearching(){ $("statusText").textContent="Locating…"; $("hereZone").textContent="Locating…"; $("hereHint").textContent="Move around a little"; }
 
+/* mic + detection (smoothed) */
 $("startBtn").addEventListener("click", async ()=>{
   try{
     const stream=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression:false,echoCancellation:false,autoGainControl:false,channelCount:1},video:false});
@@ -180,13 +225,14 @@ $("startBtn").addEventListener("click", async ()=>{
     srHz=ctx.sampleRate; const src=ctx.createMediaStreamSource(stream);
     analyser=ctx.createAnalyser(); analyser.fftSize=8192; analyser.smoothingTimeConstant=0.6;
     binHz=srHz/analyser.fftSize; freqData=new Float32Array(analyser.frequencyBinCount); src.connect(analyser);
-    $("splash").hidden=true; $("app").hidden=false; loop();
+    $("splash").hidden=true; $("app").hidden=false;
+    initMap(); loop();
   }catch(e){ $("splashNote").innerHTML="⚠️ Couldn't get the microphone. Allow it in your browser settings and tap start again."; }
 });
-function median(){ const lo=Math.floor(14000/binHz),hi=Math.min(freqData.length-1,Math.ceil(22000/binHz));
-  const a=[]; for(let i=lo;i<=hi;i++)a.push(freqData[i]); a.sort((x,y)=>x-y); return a[Math.floor(a.length*0.5)]; }
-function peak(f){ const h=120,lo=Math.max(0,Math.floor((f-h)/binHz)),hi=Math.min(freqData.length-1,Math.ceil((f+h)/binHz));
-  let m=-140; for(let i=lo;i<=hi;i++) if(freqData[i]>m)m=freqData[i]; return m; }
+function median(){ const lo=Math.floor(14000/binHz),hi2=Math.min(freqData.length-1,Math.ceil(22000/binHz));
+  const a=[]; for(let i=lo;i<=hi2;i++)a.push(freqData[i]); a.sort((x,y)=>x-y); return a[Math.floor(a.length*0.5)]; }
+function peak(f){ const h=120,lo=Math.max(0,Math.floor((f-h)/binHz)),hi2=Math.min(freqData.length-1,Math.ceil((f+h)/binHz));
+  let m=-140; for(let i=lo;i<=hi2;i++) if(freqData[i]>m)m=freqData[i]; return m; }
 function loop(){
   analyser.getFloatFrequencyData(freqData); const floor=median();
   let best=null,bestDb=-999,second=-999;
@@ -199,6 +245,8 @@ function loop(){
   } else { if(committedZone && now-lastHeard>HOLD_MS){ committedZone=null; setSearching(); } else if(!committedZone){ setSearching(); } }
   requestAnimationFrame(loop);
 }
+
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 </script>
 </body>
 </html>
