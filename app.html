@@ -166,7 +166,7 @@ function initMap(){
   const bounds=[[0,0],[H,W]];
   const url='data:image/svg+xml,'+encodeURIComponent(floorplanSVG());
   L.imageOverlay(url, bounds).addTo(map);
-  map.fitBounds(bounds); map.setMaxBounds(L.latLngBounds(bounds).pad(0.15));
+  map.fitBounds(bounds); map.setMaxBounds(L.latLngBounds(bounds).pad(0.35));
 
   // current-zone highlight (repositioned on setZone)
   hi=L.rectangle(zoneBounds("work"), {color:"#00AEEF", weight:2.5, fill:true, fillColor:"#00AEEF", fillOpacity:0.16}).addTo(map);
@@ -183,7 +183,9 @@ function initMap(){
   routeLine=L.polyline([], {color:"#00AEEF", weight:4, dashArray:"2 9", lineCap:"round"}).addTo(map);
   halo=L.marker(P(182,235), {icon:L.divIcon({className:"", html:'<div class="youpulse"></div>', iconSize:[16,16]}), interactive:false}).addTo(map);
   you=L.circleMarker(P(182,235), {radius:8,color:"#fff",weight:2.5,fillColor:"#00AEEF",fillOpacity:1}).addTo(map);
-  setTimeout(()=>map.invalidateSize(),150);
+  const refit=()=>{ map.invalidateSize(); map.fitBounds(bounds, {padding:[8,8]}); };
+  setTimeout(refit,250); setTimeout(refit,700);
+  window.addEventListener('resize', refit);
 }
 function zoneBounds(z){ const r=ZONES[z].rect; return L.latLngBounds(P(r[0],r[1]), P(r[2],r[3])); }
 
