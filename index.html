@@ -3,168 +3,136 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ultrasonic Hearing Test</title>
+<title>Frequency Finder</title>
 <style>
-  :root { color-scheme: dark; }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin:0; background:#0d1117; color:#e6edf3;
-         font:16px/1.5 -apple-system, system-ui, Segoe UI, Roboto, sans-serif; }
-  header { padding:16px; background:#11161d; border-bottom:1px solid #222c37; }
-  h1 { font-size:18px; margin:0 0 4px; }
-  header p { margin:0; color:#9aa7b4; font-size:13px; }
-  main { padding:16px; max-width:720px; margin:0 auto; }
-  .btn { width:100%; padding:16px; font-size:18px; font-weight:600; border:0; border-radius:12px;
-         background:#2f81f7; color:#fff; font-family:inherit; }
-  .btn:disabled { background:#30363d; color:#8b949e; }
-  .btn2 { padding:12px 16px; font-size:15px; font-weight:600; border:0; border-radius:10px;
-          background:#238636; color:#fff; font-family:inherit; }
-  .card { background:#11161d; border:1px solid #222c37; border-radius:12px; padding:14px; margin-top:14px; }
-  .hero .lab { color:#9aa7b4; font-size:12px; text-transform:uppercase; letter-spacing:.1em; }
-  .hero .big { font-size:40px; font-weight:700; line-height:1.1; font-variant-numeric:tabular-nums; }
-  .hero .big.on { color:#3fb950; } .hero .big.off { color:#6e7d8a; }
-  .row { display:flex; justify-content:space-between; gap:12px; align-items:center; }
-  .muted { color:#9aa7b4; font-size:13px; }
-  .mono { font-variant-numeric:tabular-nums; }
-  canvas { width:100%; height:170px; display:block; background:#0a0e14; border-radius:10px; margin-top:8px; }
-  table { width:100%; border-collapse:collapse; margin-top:6px; }
-  td { padding:8px 6px; border-top:1px solid #1c2530; font-variant-numeric:tabular-nums; }
-  td:last-child { text-align:right; font-weight:600; }
-  .pill { display:inline-block; padding:2px 9px; border-radius:999px; font-size:13px; font-weight:600; }
+  :root{ color-scheme:dark; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; background:#0d1117; color:#e6edf3; font:16px/1.5 -apple-system,system-ui,Segoe UI,Roboto,sans-serif; }
+  header{ padding:16px; background:#11161d; border-bottom:1px solid #222c37; }
+  h1{ font-size:18px; margin:0 0 4px; } header p{ margin:0; color:#9aa7b4; font-size:13px; }
+  main{ padding:16px; max-width:680px; margin:0 auto; }
+  .btn{ width:100%; padding:16px; font-size:18px; font-weight:600; border:0; border-radius:12px; background:#2f81f7; color:#fff; }
+  .card{ background:#11161d; border:1px solid #222c37; border-radius:12px; padding:14px; margin-top:14px; }
+  .dev{ display:flex; align-items:center; gap:10px; }
+  .dev .badge{ font-size:22px; } .dev b{ font-size:15px; } .dev span{ display:block; color:#9aa7b4; font-size:12px; }
+  .hero .lab{ color:#9aa7b4; font-size:12px; text-transform:uppercase; letter-spacing:.1em; }
+  .hero .big{ font-size:40px; font-weight:700; line-height:1.1; }
+  .hero .big.on{ color:#3fb950; } .hero .big.off{ color:#6e7d8a; }
+  .row{ display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .muted{ color:#9aa7b4; font-size:13px; } .mono{ font-variant-numeric:tabular-nums; }
+  .bar{ margin-top:9px; } .bar .top{ display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:4px; }
+  .bar .track{ height:13px; background:#0a0e14; border:1px solid #222c37; border-radius:7px; overflow:hidden; }
+  .bar .fill{ height:100%; width:0; border-radius:7px; transition:width .2s; }
+  .bar.win .name{ color:#3fb950; font-weight:700; }
+  .pill{ display:inline-block; padding:2px 9px; border-radius:999px; font-size:12px; font-weight:600; }
   .ok{ background:#113a2a; color:#3fb950; } .weak{ background:#3a3411; color:#d29922; } .no{ background:#20262e; color:#7d8b98; }
-  textarea { width:100%; height:150px; margin-top:10px; background:#0a0e14; color:#c9d5e1;
-             border:1px solid #222c37; border-radius:10px; padding:10px; font:12px/1.45 ui-monospace, Menlo, monospace; }
-  code { background:#0a0e14; padding:1px 5px; border-radius:5px; }
-  .verdict { font-size:15px; font-weight:600; }
+  .btns{ display:flex; gap:10px; margin-top:12px; } .btns button{ flex:1; padding:12px; font-size:14px; font-weight:600; border:0; border-radius:10px; }
+  .b-reset{ background:#20262e; color:#e6edf3; } .b-copy{ background:#238636; color:#fff; }
+  textarea{ width:100%; height:130px; margin-top:10px; background:#0a0e14; color:#c9d5e1; border:1px solid #222c37; border-radius:10px; padding:10px; font:12px/1.45 ui-monospace,Menlo,monospace; }
+  code{ background:#0a0e14; padding:1px 5px; border-radius:5px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Ultrasonic hearing test</h1>
-  <p>Run it, play tones on the Mac, then tap <b>Copy log</b> and paste it back to Claude.</p>
+  <h1>Frequency Finder</h1>
+  <p>Turn on <b>Sweep</b> in RainMaker, hold the phone near the beacon — this records the best frequency automatically.</p>
 </header>
 <main>
-  <button id="start" class="btn">Start the test (allow microphone)</button>
+  <div class="card dev"><span class="badge" id="devIcon">📱</span><div><b id="devName">Detecting device…</b><span id="devUA"></span></div></div>
+  <button id="start" class="btn">Start listening (allow microphone)</button>
+  <div id="err" class="card" hidden style="border-color:#5a1d1d"></div>
 
   <div id="live" hidden>
     <div class="card hero">
-      <div class="lab">Live peak right now (15–22 kHz)</div>
-      <div id="peak" class="big off">— kHz</div>
-      <div class="muted" style="margin-top:6px">Highest clean tone seen: <b id="ceil" class="mono">—</b></div>
+      <div class="lab">Highest frequency this device reliably hears</div>
+      <div id="winner" class="big off">— kHz</div>
+      <div class="row" style="margin-top:6px">
+        <span class="muted">Now: <b id="now" class="mono">—</b></span>
+        <span class="muted">Sample rate: <b id="sr" class="mono">—</b></span>
+      </div>
     </div>
-    <canvas id="spec" width="700" height="170"></canvas>
     <div class="card">
-      <div class="muted" style="margin-bottom:4px">Per-tone — real tone present right now?</div>
-      <table id="bands"></table>
+      <div class="muted" style="margin-bottom:2px">Best recorded per channel <span class="muted">(dB above noise floor)</span></div>
+      <div id="bars"></div>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="row"><b>Diagnostics log</b><span style="display:flex;gap:8px"><button id="download" class="btn2" style="background:#1f6feb">Download</button><button id="copy" class="btn2">Copy log</button></span></div>
-    <div id="verdict" class="verdict muted" style="margin-top:8px">Waiting to start…</div>
-    <textarea id="log" readonly></textarea>
-    <div class="muted" style="margin-top:6px">Tip: play <b>1 kHz</b>, then <b>18</b>, <b>19</b>, <b>20</b> on the Mac (hold each ~4 s). Then Copy log.</div>
+    <div class="card">
+      <div class="row"><b>Result</b><span class="pill ok" id="savedTag" hidden>saved</span></div>
+      <textarea id="result" readonly></textarea>
+      <div class="btns"><button class="b-reset" id="reset">Reset sweep</button><button class="b-copy" id="copy">Copy result</button></div>
+    </div>
   </div>
 </main>
-
 <script>
-const TARGETS=[16000,17000,17500,18000,18500,19000,19500,20000];
-const PROMINENCE=12, ABS_FLOOR=-95;
-let analyser, freqData, srHz, binHz, ceilHz=0, t0=0, lastLog=0;
-let firstSeen={}; TARGETS.forEach(f=>firstSeen[f]=false);
+const FREQS=[16000,16500,17000,17500,18000,18500,19000,19500,20000,20500];
+const PROM=12, WEAK=8, ABS_FLOOR=-95, BAR_MAX=45;
+let analyser,freqData,srHz,binHz,running=false;
+let bestProm={}, bestDb={}; FREQS.forEach(f=>{bestProm[f]=-1;bestDb[f]=-140;});
 const $=id=>document.getElementById(id);
-const lines=[];
-function log(msg){ const t=t0?((performance.now()-t0)/1000).toFixed(1)+'s':'0.0s';
-  lines.push('['+t+'] '+msg); $('log').value=lines.join('\n'); $('log').scrollTop=$('log').scrollHeight; }
 
-// boot diagnostics (captured even if permission is denied)
-log('page loaded');
-log('url: '+location.href);
-log('protocol: '+location.protocol+'  secureContext: '+window.isSecureContext);
-log('userAgent: '+navigator.userAgent);
-log('hasGetUserMedia: '+!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia));
+/* ---- device auto-label ---- */
+function device(){
+  const ua=navigator.ua||navigator.userAgent||"";
+  let type="Other", label="This device", icon="🖥️";
+  const isiOS=/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints>1);
+  if(isiOS){ type=/iPad/.test(ua)?"iPad":"iPhone"; icon="";
+    const m=ua.match(/OS (\d+)[_.](\d+)/); label=type+(m?` · iOS ${m[1]}.${m[2]}`:"")+" · Safari";
+  } else if(/Android/.test(ua)){ type="Android"; icon="🤖";
+    const m=ua.match(/Android (\d+(?:\.\d+)?)/); const br=/Chrome\/(\d+)/.test(ua)?"Chrome":(/Firefox/.test(ua)?"Firefox":"Browser");
+    label="Android"+(m?` ${m[1]}`:"")+" · "+br;
+  } else { label=(/Chrome/.test(ua)?"Chrome":/Firefox/.test(ua)?"Firefox":/Safari/.test(ua)?"Safari":"Browser")+" · desktop"; }
+  return {type,label,icon,ua};
+}
+const DEV=device();
+$("devName").textContent=DEV.label; $("devUA").textContent=DEV.ua.slice(0,60)+"…"; if(DEV.icon)$("devIcon").textContent=DEV.icon;
 
-$('copy').addEventListener('click', ()=>{
-  const txt=lines.join('\n');
-  const done=()=>{ $('copy').textContent='Copied ✓'; setTimeout(()=>$('copy').textContent='Copy log',1500); };
-  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done).catch(()=>{ $('log').select(); done(); }); }
-  else { $('log').select(); document.execCommand&&document.execCommand('copy'); done(); }
-});
+/* ---- bars ---- */
+(function(){ $("bars").innerHTML=FREQS.map(f=>
+  `<div class="bar" id="bar-${f}"><div class="top"><span class="name">${(f/1000).toFixed(1)} kHz</span><span class="mono" id="v-${f}">—</span></div><div class="track"><div class="fill" id="fill-${f}" style="background:#2f81f7"></div></div></div>`).join(""); })();
 
-$('download').addEventListener('click', ()=>{
-  const blob=new Blob([lines.join('\n')||'(empty log)'], {type:'text/plain'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download='spike-log.txt';
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url), 3000);
-  $('download').textContent='Saved ✓'; setTimeout(()=>$('download').textContent='Download',1500);
-});
-
-$('start').addEventListener('click', async ()=>{
-  t0=performance.now();
-  log('Start tapped — requesting microphone…');
+$("start").addEventListener("click", async ()=>{
   try{
-    const stream=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression:false,
-      echoCancellation:false, autoGainControl:false, channelCount:1}, video:false});
-    log('microphone GRANTED');
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression:false,echoCancellation:false,autoGainControl:false,channelCount:1},video:false});
     const ctx=new (window.AudioContext||window.webkitAudioContext)(); await ctx.resume();
-    srHz=ctx.sampleRate; log('AudioContext state: '+ctx.state+'  sampleRate: '+srHz+' Hz  (Nyquist '+(srHz/2)+' Hz)');
+    srHz=ctx.sampleRate; $("sr").textContent=(srHz/1000).toFixed(1)+" kHz";
     const src=ctx.createMediaStreamSource(stream);
     analyser=ctx.createAnalyser(); analyser.fftSize=8192; analyser.smoothingTimeConstant=0.4;
     binHz=srHz/analyser.fftSize; freqData=new Float32Array(analyser.frequencyBinCount); src.connect(analyser);
-    const st=stream.getAudioTracks()[0].getSettings();
-    log('track settings: '+JSON.stringify(st));
-    const off=('noiseSuppression'in st)&&!st.noiseSuppression&&!st.echoCancellation&&!st.autoGainControl;
-    log('DSP disabled (NS/EC/AGC off): '+off);
-    $('start').hidden=true; $('live').hidden=false; $('verdict').textContent='Listening… play tones on the Mac.';
-    buildTable(); loop();
-  }catch(e){
-    log('microphone FAILED — '+(e&&e.name?e.name:'Error')+': '+(e&&e.message?e.message:e));
-    $('verdict').innerHTML='<span style="color:#f85149">Mic blocked ('+(e&&e.name||'error')+'). See fix below, then tap Start again.</span>';
-    if(e&&e.name==='NotAllowedError') log('HINT: permission was denied. Safari: tap "aA" in address bar > Website Settings > Microphone > Allow, then reload.');
-    if(e&&e.name==='NotFoundError') log('HINT: no microphone available to this browser.');
-    if(!window.isSecureContext) log('HINT: page is NOT a secure context — must be https://');
-  }
+    $("start").hidden=true; $("live").hidden=false; running=true; loop();
+  }catch(e){ const b=$("err"); b.hidden=false; b.innerHTML="<b>Could not start:</b> "+(e&&e.message?e.message:e)+"<br><span class='muted'>Open over <code>https://</code> and allow the microphone.</span>"; }
 });
-
-function buildTable(){ $('bands').innerHTML=TARGETS.map(f=>
-  `<tr><td>${(f/1000).toFixed(1)} kHz</td><td id="v-${f}"><span class="pill no">—</span></td></tr>`).join(''); }
-function median(){ const lo=Math.floor(14000/binHz),hi=Math.min(freqData.length-1,Math.ceil(22000/binHz));
-  const a=[]; for(let i=lo;i<=hi;i++)a.push(freqData[i]); a.sort((x,y)=>x-y); return a[Math.floor(a.length*0.5)]; }
-function peakAround(f){ const h=120,lo=Math.max(0,Math.floor((f-h)/binHz)),hi=Math.min(freqData.length-1,Math.ceil((f+h)/binHz));
-  let m=-140; for(let i=lo;i<=hi;i++) if(freqData[i]>m)m=freqData[i]; return m; }
-
-const canvas=$('spec'), ctx=canvas.getContext('2d');
+function median(){ const lo=Math.floor(14000/binHz),hi=Math.min(freqData.length-1,Math.ceil(22000/binHz)); const a=[]; for(let i=lo;i<=hi;i++)a.push(freqData[i]); a.sort((x,y)=>x-y); return a[Math.floor(a.length*0.5)]; }
+function peak(f){ const h=130,lo=Math.max(0,Math.floor((f-h)/binHz)),hi=Math.min(freqData.length-1,Math.ceil((f+h)/binHz)); let m=-140; for(let i=lo;i<=hi;i++) if(freqData[i]>m)m=freqData[i]; return m; }
+function cls(p){ return p>=PROM?"ok":p>=WEAK?"weak":"no"; }
 function loop(){
-  analyser.getFloatFrequencyData(freqData);
-  const floor=median();
-  let pDb=-140,pHz=0; const lo=Math.floor(15000/binHz),hi=Math.min(freqData.length-1,Math.ceil(22000/binHz));
-  for(let i=lo;i<=hi;i++) if(freqData[i]>pDb){pDb=freqData[i];pHz=i*binHz;}
-  const peakReal=(pDb>floor+PROMINENCE)&&(pDb>ABS_FLOOR);
-  const pk=$('peak');
-  if(peakReal){ pk.textContent=(pHz/1000).toFixed(2)+' kHz'; pk.className='big on'; } else { pk.textContent='— kHz'; pk.className='big off'; }
-
-  for(const f of TARGETS){ const db=peakAround(f); const present=(db>floor+PROMINENCE)&&(db>ABS_FLOOR);
-    if(present && !firstSeen[f]){ firstSeen[f]=true; log('DETECTED '+(f/1000).toFixed(1)+' kHz  ('+db.toFixed(0)+' dB, floor '+floor.toFixed(0)+')'); }
-    if(present && f>ceilHz){ ceilHz=f; $('ceil').textContent=(f/1000).toFixed(1)+' kHz';
-      $('verdict').innerHTML='<span style="color:#3fb950">Detected up to '+(f/1000).toFixed(1)+' kHz so far.</span>'; }
-    const c=$('v-'+f); if(c) c.innerHTML=present?`<span class="pill ok">present ${db.toFixed(0)} dB</span>`:`<span class="pill no">quiet ${db>-110?db.toFixed(0):''}</span>`;
+  if(!running) return;
+  analyser.getFloatFrequencyData(freqData); const floor=median();
+  let nowF=0,nowDb=-140,winner=0;
+  for(const f of FREQS){ const db=peak(f), prom=db-floor;
+    if(prom>bestProm[f]){ bestProm[f]=prom; bestDb[f]=db; }
+    if(db>nowDb){ nowDb=db; nowF=f; }
+    if(bestProm[f]>=PROM && bestDb[f]>ABS_FLOOR) winner=Math.max(winner,f);
+    const cur=Math.max(0,Math.min(100, bestProm[f]/BAR_MAX*100));
+    const fl=$("fill-"+f); if(fl){ fl.style.width=cur+"%"; fl.style.background=bestProm[f]>=PROM?"#3fb950":bestProm[f]>=WEAK?"#d29922":"#3a4756"; }
+    const v=$("v-"+f); if(v) v.innerHTML=`<span class="pill ${cls(bestProm[f])}">${bestProm[f]>0?"+"+bestProm[f].toFixed(0):"—"}</span>`;
+    const bar=$("bar-"+f); if(bar) bar.classList.toggle("win", winner===f);
   }
-  // heartbeat log every 2s
-  if(performance.now()-lastLog>2000){ lastLog=performance.now();
-    log('peak '+(peakReal?(pHz/1000).toFixed(2)+'kHz '+pDb.toFixed(0)+'dB':'none')+' | floor '+floor.toFixed(0)+'dB | ceiling '+(ceilHz?(ceilHz/1000).toFixed(1)+'kHz':'—')); }
-  draw(floor);
+  const wn=$("winner");
+  if(winner){ wn.textContent=(winner/1000).toFixed(1)+" kHz"; wn.className="big on"; } else { wn.textContent="— kHz"; wn.className="big off"; }
+  const nowProm=nowDb-floor;
+  $("now").textContent=(nowProm>=WEAK)?(nowF/1000).toFixed(2)+" kHz ("+nowDb.toFixed(0)+" dB)":"—";
+  writeResult(winner);
   requestAnimationFrame(loop);
 }
-function draw(floor){ const W=canvas.width,H=canvas.height; ctx.clearRect(0,0,W,H);
-  const fMin=14000,fMax=22000,x=f=>(f-fMin)/(fMax-fMin)*W,y=d=>H-Math.max(0,Math.min(1,(d+120)/90))*H;
-  ctx.font='11px sans-serif';
-  for(const f of TARGETS){ ctx.strokeStyle='#1c2530'; ctx.beginPath(); ctx.moveTo(x(f),0); ctx.lineTo(x(f),H); ctx.stroke();
-    ctx.fillStyle='#5b6773'; ctx.fillText((f/1000).toFixed(1),x(f)-8,H-4); }
-  ctx.strokeStyle='#3fb95055'; ctx.beginPath(); ctx.moveTo(0,y(floor+PROMINENCE)); ctx.lineTo(W,y(floor+PROMINENCE)); ctx.stroke();
-  ctx.strokeStyle='#2f81f7'; ctx.lineWidth=2; ctx.beginPath();
-  const lo=Math.floor(fMin/binHz),hi=Math.min(freqData.length-1,Math.ceil(fMax/binHz)); let f1=true;
-  for(let i=lo;i<=hi;i++){ const px=x(i*binHz),py=y(freqData[i]); if(f1){ctx.moveTo(px,py);f1=false;}else ctx.lineTo(px,py);} ctx.stroke();
+function writeResult(winner){
+  let t=`Device: ${DEV.label}\nSample rate: ${(srHz/1000).toFixed(1)} kHz\nHighest reliably heard: ${winner?(winner/1000).toFixed(1)+" kHz":"none yet"}\n\nChannel  best(dB over floor)  verdict\n`;
+  for(const f of FREQS){ const p=bestProm[f]; t+=`${(f/1000).toFixed(1)} kHz   ${p>0?("+"+p.toFixed(0)).padStart(4):"  —"}   ${p>=PROM?"heard":p>=WEAK?"weak":"no"}\n`; }
+  t+=`\nUA: ${DEV.ua}`;
+  $("result").value=t;
+  try{ localStorage.setItem("freqfinder:"+DEV.type, t); $("savedTag").hidden=false; }catch(_){}
 }
+$("reset").onclick=()=>{ FREQS.forEach(f=>{bestProm[f]=-1;bestDb[f]=-140;}); };
+$("copy").onclick=()=>{ const t=$("result").value;
+  (navigator.clipboard?.writeText(t)||Promise.reject()).then(()=>{$("copy").textContent="Copied ✓";setTimeout(()=>$("copy").textContent="Copy result",1400);}).catch(()=>{$("result").select();}); };
 </script>
 </body>
 </html>
