@@ -42,8 +42,11 @@
   .pin b{ display:block; width:22px; height:22px; margin:0 auto; border-radius:50% 50% 50% 0; transform:rotate(45deg); background:var(--c);
           border:2.5px solid #fff; box-shadow:0 2px 5px rgba(0,0,0,.3); }
   .pin i{ position:absolute; left:9px; top:7px; width:8px; height:8px; border-radius:50%; background:#fff; }
-  .youpulse{ width:20px; height:20px; border-radius:50%; background:rgba(0,174,239,.25); animation:halo 1.6s infinite; }
+  .loc{ position:relative; width:64px; height:64px; }
+  .loc-halo{ position:absolute; left:22px; top:22px; width:20px; height:20px; border-radius:50%; background:rgba(0,174,239,.25); animation:halo 1.6s infinite; }
   @keyframes halo{ 0%{transform:scale(.5);opacity:.9} 100%{transform:scale(2.6);opacity:0} }
+  .loc-cone{ position:absolute; inset:0; transform-origin:32px 32px; transition:transform .12s linear; opacity:0; }
+  .loc-dot{ position:absolute; left:24px; top:24px; width:16px; height:16px; border-radius:50%; background:#00AEEF; border:3px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.35); }
   .leaflet-tooltip.lbl{ background:#fff; border:1px solid var(--line2); border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.12); font-size:11px; font-weight:700; color:var(--ink); padding:2px 8px; }
   .leaflet-tooltip.lbl::before{ display:none; }
 
@@ -179,7 +182,8 @@ function aStar(start, goal){
 }
 
 const $=id=>document.getElementById(id);
-let map,P,bounds,overZoom,hi,you,halo,casing,routeLine,destMarker,poiLayer;
+let map,P,bounds,overZoom,hi,loc,locConeEl,casing,routeLine,destMarker,poiLayer;
+const MAP_NORTH_OFFSET = 0; // degrees to align the cone with the floor plan's real north (set once we know the venue's orientation)
 let analyser,freqData,srHz,binHz;
 let committedZone=null,candidate=null,candCount=0,lastHeard=0,destPoi=null,follow=true;
 const PROMINENCE=12,ABS_FLOOR=-95,LEAD_DB=3,COMMIT_FRAMES=22,HOLD_MS=3500;
@@ -199,8 +203,8 @@ function initMap(){
   poiLayer=L.layerGroup().addTo(map);
   POIS.forEach(p=>{ const m=L.marker(P(NODES[p.id].x,NODES[p.id].y), {icon:pinIcon(p.color)}).addTo(poiLayer);
     m.bindTooltip(p.name,{permanent:true,direction:"top",offset:[0,-24],className:"lbl"}); m.on("click",()=>chooseDest(p.id)); });
-  halo=L.marker(P(182,235), {icon:L.divIcon({className:"",html:'<div class="youpulse"></div>',iconSize:[20,20]}), interactive:false}).addTo(map);
-  you=L.circleMarker(P(182,235), {radius:9,color:"#fff",weight:3,fillColor:"#00AEEF",fillOpacity:1}).addTo(map);
+  loc=L.marker(P(182,235), {icon:L.divIcon({className:"", html:'<div class="loc"><div class="loc-halo"></div><div class="loc-cone" id="locCone"><svg width="64" height="64" viewBox="0 0 64 64"><path d="M32 30 L21 3 Q32 -3 43 3 Z" fill="rgba(0,174,239,0.4)"/></svg></div><div class="loc-dot"></div></div>', iconSize:[64,64], iconAnchor:[32,32]}), interactive:false, zIndexOffset:1000}).addTo(map);
+  setTimeout(()=>{ locConeEl=document.getElementById('locCone'); }, 300);
 
   map.on('dragstart zoomstart', ()=>setFollow(false));
   const refit=()=>{ map.invalidateSize(); map.setView(P(182,235), overZoom+1); };
@@ -245,14 +249,33 @@ function drawRoute(frame){
 $("navClear").onclick=()=>{ destPoi=null; $("search").value=""; $("searchClear").hidden=true; document.querySelectorAll(".chip").forEach(c=>c.classList.remove("sel")); drawRoute(false); };
 
 function setZone(z){ committedZone=z; const zn=ZONES[z];
-  you.setLatLng(P(zn.cx,zn.cy)); halo.setLatLng(P(zn.cx,zn.cy)); hi.setBounds(zb(z));
+  loc.setLatLng(P(zn.cx,zn.cy)); hi.setBounds(zb(z));
   $("statusText").textContent="You're in "+zn.name; $("hereZone").textContent=zn.name; $("hereHint").textContent="You are here";
   if(follow) map.panTo(P(zn.cx,zn.cy), {animate:true});
   if(destPoi) drawRoute(false);
 }
 function setSearching(){ $("statusText").textContent="Locating…"; $("hereZone").textContent="Locating…"; $("hereHint").textContent="Move around a little"; }
 
+/* compass / heading cone */
+function onHeading(e){
+  let hd=null;
+  if(typeof e.webkitCompassHeading==='number' && !isNaN(e.webkitCompassHeading)) hd=e.webkitCompassHeading;   // iOS: clockwise from north
+  else if(e.absolute===true && typeof e.alpha==='number') hd=(360 - e.alpha) % 360;                           // Android absolute
+  if(hd==null || !locConeEl) return;
+  locConeEl.style.opacity=1; locConeEl.style.transform='rotate('+((hd + MAP_NORTH_OFFSET + 360) % 360)+'deg)';
+}
+async function enableCompass(){
+  try{
+    if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function'){
+      const s=await DeviceOrientationEvent.requestPermission(); if(s!=='granted') return;
+    }
+    window.addEventListener('deviceorientationabsolute', onHeading, true);
+    window.addEventListener('deviceorientation', onHeading, true);
+  }catch(_){}
+}
+
 $("startBtn").addEventListener("click", async ()=>{
+  enableCompass();                       // request compass permission within this tap (iOS needs the gesture)
   try{
     const stream=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression:false,echoCancellation:false,autoGainControl:false,channelCount:1},video:false});
     const ctx=new (window.AudioContext||window.webkitAudioContext)(); await ctx.resume();
