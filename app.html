@@ -3,70 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<title>Bharat Mandapam · Find Your Way</title>
+<title>Office Wayfinding · Demo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
-  :root{
-    --brand:#00AEEF; --brand-ink:#007bab; --ink:#0e1b26; --muted:#5f7284;
-    --bg:#eef3f6; --panel:#ffffff; --line:#e2e9ee; --line2:#d3dde4;
-    --z1:#00AEEF; --z2:#7b61ff; --dinner:#f2994a; --reg:#27ae60; --wash:#2d9cdb; --exit:#eb5757; --help:#9b51e0;
-  }
+  :root{ --brand:#00AEEF; --brand-ink:#007bab; --ink:#0e1b26; --muted:#5f7284;
+    --bg:#eef3f6; --panel:#ffffff; --line:#e2e9ee; --line2:#d3dde4; }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ height:100%; }
-  body{ margin:0; background:var(--bg); color:var(--ink);
-        font-family:Manrope,system-ui,-apple-system,sans-serif; overscroll-behavior:none; }
-  .app{ height:100dvh; display:flex; flex-direction:column; max-width:520px; margin:0 auto; background:var(--bg); }
-
-  /* header */
-  header{ background:var(--panel); border-bottom:1px solid var(--line); padding:12px 16px calc(12px);
-          display:flex; align-items:center; gap:12px; }
-  .logo{ width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,var(--brand),#0e8fc4);
-         display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:15px; }
-  .htxt b{ display:block; font-size:15px; font-weight:700; letter-spacing:-.01em; }
-  .htxt span{ font-size:11.5px; color:var(--muted); }
-  .status{ margin-left:auto; display:flex; align-items:center; gap:7px; background:#e7f7fe; color:var(--brand-ink);
-           padding:6px 11px; border-radius:999px; font-size:12.5px; font-weight:600; }
-  .dot{ width:8px; height:8px; border-radius:50%; background:var(--brand); box-shadow:0 0 0 0 rgba(0,174,239,.5); animation:pulse 1.8s infinite; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:Manrope,system-ui,-apple-system,sans-serif; overscroll-behavior:none; }
+  .app{ height:100dvh; display:flex; flex-direction:column; max-width:520px; margin:0 auto; }
+  header{ background:var(--panel); border-bottom:1px solid var(--line); padding:12px 16px; display:flex; align-items:center; gap:12px; }
+  .logo{ width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,var(--brand),#0e8fc4); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:15px; }
+  .htxt b{ display:block; font-size:15px; font-weight:700; } .htxt span{ font-size:11.5px; color:var(--muted); }
+  .status{ margin-left:auto; display:flex; align-items:center; gap:7px; background:#e7f7fe; color:var(--brand-ink); padding:6px 11px; border-radius:999px; font-size:12.5px; font-weight:600; }
+  .dot{ width:8px; height:8px; border-radius:50%; background:var(--brand); animation:pulse 1.8s infinite; }
   @keyframes pulse{ 0%{box-shadow:0 0 0 0 rgba(0,174,239,.45)} 70%{box-shadow:0 0 0 8px rgba(0,174,239,0)} 100%{box-shadow:0 0 0 0 rgba(0,174,239,0)} }
-
-  /* map */
   .mapwrap{ flex:1; position:relative; overflow:hidden; }
   svg.map{ width:100%; height:100%; display:block; }
   .zoneFill{ transition:opacity .3s, stroke-width .3s; }
-  .youdot{ transition:cx .6s ease, cy .6s ease; }
-
-  /* bottom sheet */
-  .sheet{ background:var(--panel); border-top-left-radius:20px; border-top-right-radius:20px;
-          box-shadow:0 -8px 24px rgba(14,27,38,.08); padding:14px 16px calc(16px + env(safe-area-inset-bottom)); }
+  .youdot{ transition:cx .6s ease, cy .6s ease; } .youhalo{ transition:cx .6s ease, cy .6s ease; }
+  .sheet{ background:var(--panel); border-top-left-radius:20px; border-top-right-radius:20px; box-shadow:0 -8px 24px rgba(14,27,38,.08); padding:14px 16px calc(16px + env(safe-area-inset-bottom)); }
   .grab{ width:38px; height:4px; border-radius:2px; background:var(--line2); margin:0 auto 12px; }
   .here{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
   .here .ring{ width:38px; height:38px; border-radius:50%; border:3px solid var(--brand); display:flex; align-items:center; justify-content:center; }
   .here .ring i{ width:12px; height:12px; border-radius:50%; background:var(--brand); }
   .here b{ font-size:16px; font-weight:700; } .here span{ display:block; font-size:12px; color:var(--muted); }
   .label{ font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
-  .chips{ display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
-  .chips::-webkit-scrollbar{ display:none; }
-  .chip{ flex:0 0 auto; border:1px solid var(--line2); background:#fff; border-radius:12px; padding:9px 13px;
-         font-size:13.5px; font-weight:600; color:var(--ink); display:flex; align-items:center; gap:7px; }
-  .chip:active{ background:#f2f6f9; } .chip.sel{ border-color:var(--brand); background:#e9f8fe; color:var(--brand-ink); }
-  .chip .sw{ width:9px; height:9px; border-radius:50%; }
-  .route{ margin-top:12px; background:#f4f8fb; border:1px solid var(--line); border-radius:14px; padding:12px 14px;
-          display:flex; align-items:center; gap:12px; }
+  .chips{ display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; } .chips::-webkit-scrollbar{ display:none; }
+  .chip{ flex:0 0 auto; border:1px solid var(--line2); background:#fff; border-radius:12px; padding:9px 13px; font-size:13.5px; font-weight:600; color:var(--ink); display:flex; align-items:center; gap:7px; }
+  .chip.sel{ border-color:var(--brand); background:#e9f8fe; color:var(--brand-ink); } .chip .sw{ width:9px; height:9px; border-radius:50%; }
+  .route{ margin-top:12px; background:#f4f8fb; border:1px solid var(--line); border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:12px; }
   .route .to b{ font-size:15px; } .route .to span{ font-size:12.5px; color:var(--muted); }
   .route .go{ margin-left:auto; background:var(--brand); color:#fff; border:0; border-radius:11px; padding:10px 15px; font-weight:700; font-size:14px; }
-
-  /* splash */
-  .splash{ position:fixed; inset:0; background:linear-gradient(160deg,#00AEEF,#0a6fb0 90%); color:#fff; z-index:20;
-           display:flex; flex-direction:column; justify-content:center; padding:32px; }
+  .splash{ position:fixed; inset:0; background:linear-gradient(160deg,#00AEEF,#0a6fb0 90%); color:#fff; z-index:20; display:flex; flex-direction:column; justify-content:center; padding:32px; }
   .splash .brand{ font-size:12px; letter-spacing:.22em; text-transform:uppercase; opacity:.85; font-weight:600; }
   .splash h1{ font-size:34px; font-weight:800; line-height:1.1; margin:10px 0 8px; letter-spacing:-.02em; }
   .splash p{ font-size:15px; opacity:.9; margin:0 0 30px; max-width:20em; }
-  .splash button{ background:#fff; color:#0a6fb0; border:0; border-radius:14px; padding:16px; font-size:17px; font-weight:800;
-                  font-family:inherit; box-shadow:0 8px 22px rgba(0,0,0,.18); }
+  .splash button{ background:#fff; color:#0a6fb0; border:0; border-radius:14px; padding:16px; font-size:17px; font-weight:800; font-family:inherit; box-shadow:0 8px 22px rgba(0,0,0,.18); }
   .splash small{ display:block; margin-top:14px; opacity:.85; font-size:12.5px; }
-  .foot{ text-align:center; color:var(--muted); font-size:11px; padding:8px 0 4px; }
-  .foot b{ color:var(--brand-ink); font-weight:700; }
+  .foot{ text-align:center; color:var(--muted); font-size:11px; padding:8px 0 4px; } .foot b{ color:var(--brand-ink); font-weight:700; }
   [hidden]{ display:none !important; }
 </style>
 </head>
@@ -74,58 +50,55 @@
 
 <div class="splash" id="splash">
   <div class="brand">Communique · Experiential × Digital</div>
-  <h1>Find your way<br>at Bharat Mandapam</h1>
-  <p>Live indoor navigation — no app, no download. Tap start and we'll show where you are.</p>
+  <h1>Find your way<br>inside</h1>
+  <p>Live indoor navigation — no app, no download. Tap start and we'll show which area you're in.</p>
   <button id="startBtn">Start navigating</button>
   <small id="splashNote">We'll ask for the microphone — that's how we find your location. Nothing is recorded.</small>
 </div>
 
 <div class="app" id="app" hidden>
   <header>
-    <div class="logo">BM</div>
-    <div class="htxt"><b>Bharat Mandapam</b><span>Hall 3 · Live wayfinding</span></div>
+    <div class="logo">CM</div>
+    <div class="htxt"><b>Office wayfinding</b><span>Live demo · sound-based</span></div>
     <div class="status"><span class="dot"></span><span id="statusText">Locating…</span></div>
   </header>
 
   <div class="mapwrap">
-    <svg class="map" id="map" viewBox="0 0 360 470" preserveAspectRatio="xMidYMid meet" aria-label="Hall floor map">
+    <svg class="map" id="map" viewBox="0 0 360 470" preserveAspectRatio="xMidYMid meet" aria-label="Office floor with three partitions">
       <rect x="0" y="0" width="360" height="470" fill="#eef3f6"/>
-      <!-- hall outline -->
       <rect x="22" y="22" width="316" height="426" rx="14" fill="#ffffff" stroke="#d3dde4" stroke-width="2"/>
-      <!-- zones -->
-      <rect id="fill-z1" class="zoneFill" x="30" y="30" width="146" height="300" rx="10" fill="#00AEEF" opacity="0.10" stroke="#00AEEF" stroke-width="1"/>
-      <rect id="fill-z2" class="zoneFill" x="184" y="30" width="146" height="300" rx="10" fill="#7b61ff" opacity="0.10" stroke="#7b61ff" stroke-width="1"/>
-      <text x="103" y="50" text-anchor="middle" font-size="11" font-weight="700" fill="#007bab">ZONE 1 · Automotive</text>
-      <text x="257" y="50" text-anchor="middle" font-size="11" font-weight="700" fill="#5b46c9">ZONE 2 · Tech</text>
-      <!-- stall blocks -->
+
+      <!-- partition zones -->
+      <rect id="fill-recep" class="zoneFill" x="28" y="28" width="97"  height="414" rx="8" fill="#27ae60" stroke="#27ae60" stroke-width="1" opacity="0.07"/>
+      <rect id="fill-work"  class="zoneFill" x="131" y="28" width="102" height="414" rx="8" fill="#00AEEF" stroke="#00AEEF" stroke-width="1" opacity="0.10"/>
+      <rect id="fill-meet"  class="zoneFill" x="239" y="28" width="93"  height="414" rx="8" fill="#7b61ff" stroke="#7b61ff" stroke-width="1" opacity="0.10"/>
+
+      <text x="76"  y="45" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1f8a4c">RECEPTION</text>
+      <text x="182" y="45" text-anchor="middle" font-size="10.5" font-weight="700" fill="#007bab">WORK AREA · 18 kHz</text>
+      <text x="285" y="45" text-anchor="middle" font-size="10.5" font-weight="700" fill="#5b46c9">MEETING · 19 kHz</text>
+
+      <!-- partition walls with door gaps -->
+      <g stroke="#aebcc8" stroke-width="3" stroke-linecap="round">
+        <line x1="128" y1="30" x2="128" y2="200"/><line x1="128" y1="250" x2="128" y2="440"/>
+        <line x1="236" y1="30" x2="236" y2="200"/><line x1="236" y1="250" x2="236" y2="440"/>
+      </g>
+
+      <!-- furniture -->
       <g fill="#eaf1f5" stroke="#d3dde4">
-        <rect x="46" y="80" width="52" height="34" rx="4"/><rect x="112" y="80" width="52" height="34" rx="4"/>
-        <rect x="46" y="140" width="52" height="34" rx="4"/><rect x="112" y="140" width="52" height="34" rx="4"/>
-        <rect x="196" y="80" width="52" height="34" rx="4"/><rect x="262" y="80" width="52" height="34" rx="4"/>
-        <rect x="196" y="140" width="52" height="34" rx="4"/><rect x="262" y="140" width="52" height="34" rx="4"/>
+        <rect x="42" y="300" width="66" height="18" rx="4"/>
+        <rect x="145" y="92" width="34" height="26" rx="3"/><rect x="188" y="92" width="34" height="26" rx="3"/>
+        <rect x="145" y="152" width="34" height="26" rx="3"/><rect x="188" y="152" width="34" height="26" rx="3"/>
+        <rect x="252" y="150" width="64" height="108" rx="8"/>
       </g>
-      <g font-size="8.5" fill="#8497a6" text-anchor="middle">
-        <text x="72" y="101">A1</text><text x="138" y="101">A2</text><text x="72" y="161">A3</text><text x="138" y="161">A4</text>
-        <text x="222" y="101">T1</text><text x="288" y="101">T2</text><text x="222" y="161">T3</text><text x="288" y="161">T4</text>
-      </g>
-      <!-- aisle -->
-      <rect x="176" y="30" width="8" height="300" fill="#f4f8fb"/>
-      <rect x="30" y="210" width="300" height="10" fill="#f4f8fb"/>
 
-      <!-- route line (hidden until a destination is picked) -->
       <path id="routeLine" d="" fill="none" stroke="#00AEEF" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="2 8" hidden/>
-
-      <!-- POIs -->
       <g id="pois" font-size="9" font-weight="600" fill="#0e1b26" text-anchor="middle"></g>
-
-      <!-- you-are-here -->
       <g id="you" hidden>
-        <circle id="youHalo" cx="103" cy="360" r="16" fill="#00AEEF" opacity="0.18"/>
-        <circle id="youDot" class="youdot" cx="103" cy="360" r="8" fill="#00AEEF" stroke="#fff" stroke-width="2.5"/>
+        <circle id="youHalo" class="youhalo" cx="182" cy="235" r="16" fill="#00AEEF" opacity="0.18"/>
+        <circle id="youDot" class="youdot" cx="182" cy="235" r="8" fill="#00AEEF" stroke="#fff" stroke-width="2.5"/>
       </g>
-      <!-- entrance -->
-      <rect x="150" y="446" width="60" height="6" rx="3" fill="#00AEEF"/>
-      <text x="180" y="463" text-anchor="middle" font-size="9.5" font-weight="600" fill="#5f7284">ENTRANCE</text>
+      <rect x="52" y="442" width="44" height="6" rx="3" fill="#27ae60"/>
+      <text x="74" y="461" text-anchor="middle" font-size="9.5" font-weight="600" fill="#5f7284">ENTRANCE</text>
     </svg>
   </div>
 
@@ -133,7 +106,7 @@
     <div class="grab"></div>
     <div class="here">
       <div class="ring"><i></i></div>
-      <div><b id="hereZone">Locating…</b><span id="hereHint">Hold on, finding your position</span></div>
+      <div><b id="hereZone">Locating…</b><span id="hereHint">Move around a little</span></div>
     </div>
     <div class="label">Where to?</div>
     <div class="chips" id="chips"></div>
@@ -146,81 +119,60 @@
 </div>
 
 <script>
-/* ===== CONFIG — swap this block when the real hall layout arrives ===== */
-const BEACONS = [ {freq:18000, zone:"z1"}, {freq:19000, zone:"z2"} ];
+/* ===== CONFIG — swap when your real office sketch arrives =====
+   2 beacons for the first test (Work Area = 18 kHz, Meeting = 19 kHz).
+   Reception has no beacon yet — add one (e.g. 18.5 kHz) to light it up.  */
+const BEACONS = [ {freq:18000, zone:"work"}, {freq:19000, zone:"meet"} ];
 const ZONES = {
-  z1: { name:"Zone 1 · Automotive", x:103, y:200 },
-  z2: { name:"Zone 2 · Tech",       x:257, y:200 },
+  recep: { name:"Reception",    x:76,  y:235 },
+  work:  { name:"Work Area",    x:182, y:235 },
+  meet:  { name:"Meeting Room", x:285, y:235 },
 };
 const POIS = [
-  { id:"reg",   name:"Registration", x:80,  y:400, color:"#27ae60" },
-  { id:"dinner",name:"Dinner",       x:80,  y:250, color:"#f2994a" },
-  { id:"wash",  name:"Washrooms",    x:300, y:250, color:"#2d9cdb" },
-  { id:"help",  name:"Help Desk",    x:180, y:300, color:"#9b51e0" },
-  { id:"exit",  name:"Exit",         x:300, y:400, color:"#eb5757" },
+  { id:"entrance", name:"Entrance", x:74,  y:405, color:"#27ae60" },
+  { id:"pantry",   name:"Pantry",   x:74,  y:95,  color:"#f2994a" },
+  { id:"wash",     name:"Washroom", x:285, y:95,  color:"#2d9cdb" },
+  { id:"manager",  name:"Manager",  x:285, y:400, color:"#9b51e0" },
 ];
-/* ===================================================================== */
+/* ============================================================== */
 
-const PROMINENCE=12, ABS_FLOOR=-95, LEAD_DB=3;
-const COMMIT_FRAMES=22;   // ~0.7s of agreement before switching zone (anti-flicker)
-const HOLD_MS=3500;       // keep last zone this long through dropouts
+const PROMINENCE=12, ABS_FLOOR=-95, LEAD_DB=3, COMMIT_FRAMES=22, HOLD_MS=3500;
 let analyser, freqData, srHz, binHz;
 let committedZone=null, candidate=null, candCount=0, lastHeard=0, destPoi=null;
 const $=id=>document.getElementById(id);
 
-/* build POI pins + destination chips */
-(function(){
-  const g=$("pois"), chips=$("chips");
+(function(){ const g=$("pois"), chips=$("chips");
   POIS.forEach(p=>{
     const pin=document.createElementNS("http://www.w3.org/2000/svg","g");
-    pin.innerHTML=`<circle cx="${p.x}" cy="${p.y}" r="6.5" fill="${p.color}" stroke="#fff" stroke-width="2"/>
-      <text x="${p.x}" y="${p.y-11}">${p.name}</text>`;
+    pin.innerHTML=`<circle cx="${p.x}" cy="${p.y}" r="6.5" fill="${p.color}" stroke="#fff" stroke-width="2"/><text x="${p.x}" y="${p.y-11}">${p.name}</text>`;
     g.appendChild(pin);
-    const c=document.createElement("button");
-    c.className="chip"; c.innerHTML=`<span class="sw" style="background:${p.color}"></span>${p.name}`;
-    c.onclick=()=>selectDest(p, c);
-    chips.appendChild(c);
+    const c=document.createElement("button"); c.className="chip";
+    c.innerHTML=`<span class="sw" style="background:${p.color}"></span>${p.name}`;
+    c.onclick=()=>selectDest(p,c); chips.appendChild(c);
   });
 })();
 
-function selectDest(p, chipEl){
-  destPoi = (destPoi && destPoi.id===p.id) ? null : p;
-  document.querySelectorAll(".chip").forEach(c=>c.classList.remove("sel"));
-  if(destPoi){ chipEl.classList.add("sel"); }
-  drawRoute();
-}
-function drawRoute(){
-  const rl=$("routeLine"), box=$("routeBox");
-  if(!destPoi || !committedZone){ rl.hidden=true; box.hidden=true; return; }
+function selectDest(p,el){ destPoi=(destPoi&&destPoi.id===p.id)?null:p;
+  document.querySelectorAll(".chip").forEach(c=>c.classList.remove("sel")); if(destPoi)el.classList.add("sel"); drawRoute(); }
+function drawRoute(){ const rl=$("routeLine"),box=$("routeBox");
+  if(!destPoi||!committedZone){ rl.hidden=true; box.hidden=true; return; }
   const from=ZONES[committedZone];
-  rl.setAttribute("d", `M ${from.x} ${from.y} L 180 210 L ${destPoi.x} ${destPoi.y}`);
-  rl.hidden=false;
-  const dist=Math.round(Math.hypot(destPoi.x-from.x, destPoi.y-from.y)*0.32)+8;
+  rl.setAttribute("d",`M ${from.x} ${from.y} L 182 235 L ${destPoi.x} ${destPoi.y}`); rl.hidden=false;
+  const dist=Math.round(Math.hypot(destPoi.x-from.x,destPoi.y-from.y)*0.12)+3;
   box.hidden=false; $("routeName").textContent="Walk to "+destPoi.name;
-  $("routeMeta").textContent="~"+dist+" m · about "+Math.max(1,Math.round(dist/60))+" min";
-}
+  $("routeMeta").textContent="~"+dist+" m · about "+Math.max(1,Math.round(dist/50))+" min"; }
 $("clearRoute").onclick=()=>{ destPoi=null; document.querySelectorAll(".chip").forEach(c=>c.classList.remove("sel")); drawRoute(); };
 
-function setZone(z){
-  committedZone=z;
-  const zn=ZONES[z];
+function setZone(z){ committedZone=z; const zn=ZONES[z];
   $("you").hidden=false;
   $("youDot").setAttribute("cx",zn.x); $("youDot").setAttribute("cy",zn.y);
   $("youHalo").setAttribute("cx",zn.x); $("youHalo").setAttribute("cy",zn.y);
-  $("statusText").textContent="You're in "+zn.name.split("·")[0].trim();
+  $("statusText").textContent="You're in "+zn.name;
   $("hereZone").textContent=zn.name; $("hereHint").textContent="You are here";
-  $("fill-z1").setAttribute("opacity", z==="z1"?"0.26":"0.08");
-  $("fill-z2").setAttribute("opacity", z==="z2"?"0.26":"0.08");
-  $("fill-z1").setAttribute("stroke-width", z==="z1"?"2.5":"1");
-  $("fill-z2").setAttribute("stroke-width", z==="z2"?"2.5":"1");
-  drawRoute();
-}
-function setSearching(){
-  $("statusText").textContent="Locating…";
-  $("hereZone").textContent="Locating…"; $("hereHint").textContent="Move around a little";
-}
+  Object.keys(ZONES).forEach(k=>{ const el=$("fill-"+k); if(el){ el.setAttribute("opacity",k===z?"0.28":"0.07"); el.setAttribute("stroke-width",k===z?"2.5":"1"); }});
+  drawRoute(); }
+function setSearching(){ $("statusText").textContent="Locating…"; $("hereZone").textContent="Locating…"; $("hereHint").textContent="Move around a little"; }
 
-/* ===== mic + detection (smoothed) ===== */
 $("startBtn").addEventListener("click", async ()=>{
   try{
     const stream=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression:false,echoCancellation:false,autoGainControl:false,channelCount:1},video:false});
@@ -229,29 +181,22 @@ $("startBtn").addEventListener("click", async ()=>{
     analyser=ctx.createAnalyser(); analyser.fftSize=8192; analyser.smoothingTimeConstant=0.6;
     binHz=srHz/analyser.fftSize; freqData=new Float32Array(analyser.frequencyBinCount); src.connect(analyser);
     $("splash").hidden=true; $("app").hidden=false; loop();
-  }catch(e){
-    $("splashNote").innerHTML="⚠️ Couldn't get the microphone. Allow it in your browser settings and tap start again.";
-  }
+  }catch(e){ $("splashNote").innerHTML="⚠️ Couldn't get the microphone. Allow it in your browser settings and tap start again."; }
 });
 function median(){ const lo=Math.floor(14000/binHz),hi=Math.min(freqData.length-1,Math.ceil(22000/binHz));
   const a=[]; for(let i=lo;i<=hi;i++)a.push(freqData[i]); a.sort((x,y)=>x-y); return a[Math.floor(a.length*0.5)]; }
 function peak(f){ const h=120,lo=Math.max(0,Math.floor((f-h)/binHz)),hi=Math.min(freqData.length-1,Math.ceil((f+h)/binHz));
   let m=-140; for(let i=lo;i<=hi;i++) if(freqData[i]>m)m=freqData[i]; return m; }
 function loop(){
-  analyser.getFloatFrequencyData(freqData);
-  const floor=median();
+  analyser.getFloatFrequencyData(freqData); const floor=median();
   let best=null,bestDb=-999,second=-999;
   for(const b of BEACONS){ const db=peak(b.freq); const present=(db>floor+PROMINENCE)&&(db>ABS_FLOOR);
     if(present){ if(db>bestDb){ second=bestDb; best=b; bestDb=db; } else if(db>second){ second=db; } } }
   const now=performance.now();
-  if(best && (bestDb-second>=LEAD_DB || second<=-900)){
-    lastHeard=now;
+  if(best && (bestDb-second>=LEAD_DB || second<=-900)){ lastHeard=now;
     if(best.zone===candidate){ candCount++; } else { candidate=best.zone; candCount=1; }
     if(candCount>=COMMIT_FRAMES && committedZone!==candidate){ setZone(candidate); }
-  } else {
-    if(committedZone && now-lastHeard>HOLD_MS){ committedZone=null; setSearching(); }
-    else if(!committedZone){ setSearching(); }
-  }
+  } else { if(committedZone && now-lastHeard>HOLD_MS){ committedZone=null; setSearching(); } else if(!committedZone){ setSearching(); } }
   requestAnimationFrame(loop);
 }
 </script>
