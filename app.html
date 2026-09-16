@@ -124,48 +124,59 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-/* ===== CONFIG — swap when your real office sketch/plan arrives ===== */
-const W=360, H=470;
-const BEACONS = [ {freq:18000, zone:"work"}, {freq:19000, zone:"meet"} ];
+/* ===== CONFIG — Ritik's office (3 rooms: Cafeteria | Reception | Tech Room) =====
+   2 beacons for the first test: Cafeteria = 18 kHz, Reception = 19 kHz.
+   Add a 3rd board later -> {freq:18500, zone:"tech"} to light up the Tech Room. */
+const W=440, H=300;
+const BEACONS = [ {freq:18000, zone:"cafeteria"}, {freq:19000, zone:"reception"} ];
 const ZONES = {
-  recep:{ name:"Reception", cx:76, cy:235, rect:[28,28,125,442] },
-  work: { name:"Work Area", cx:182, cy:235, rect:[131,28,233,442] },
-  meet: { name:"Meeting Room", cx:285, cy:235, rect:[239,28,332,442] },
+  cafeteria:{ name:"Cafeteria",  cx:88,  cy:170, rect:[24,44,154,278] },
+  reception:{ name:"Reception",  cx:220, cy:178, rect:[154,44,286,278] },
+  tech:     { name:"Tech Room",  cx:350, cy:170, rect:[286,44,416,278] },
 };
-const NODES = { recep:{x:76,y:235}, work:{x:182,y:235}, meet:{x:285,y:235},
-  entrance:{x:74,y:405}, pantry:{x:74,y:95}, wash:{x:285,y:95}, manager:{x:285,y:400} };
-const EDGES = { recep:["work","entrance","pantry"], work:["recep","meet"], meet:["work","wash","manager"],
-  entrance:["recep"], pantry:["recep"], wash:["meet"], manager:["meet"] };
+const NODES = {
+  cafeteria:{x:88,y:170}, reception:{x:220,y:178}, tech:{x:350,y:170},
+  toilet:{x:193,y:64}, mainexit:{x:258,y:52}, sideexit:{x:32,y:160},
+  dCR:{x:154,y:170}, dRT:{x:286,y:170},
+};
+const EDGES = {
+  cafeteria:["dCR","sideexit"], dCR:["cafeteria","reception"],
+  reception:["dCR","dRT","toilet","mainexit"], dRT:["reception","tech"], tech:["dRT"],
+  toilet:["reception"], mainexit:["reception"], sideexit:["cafeteria"],
+};
 const POIS = [
-  { id:"entrance", name:"Entrance", color:"#27ae60" },
-  { id:"pantry",   name:"Pantry",   color:"#f2994a" },
-  { id:"wash",     name:"Washroom", color:"#2d9cdb" },
-  { id:"manager",  name:"Manager",  color:"#9b51e0" },
+  { id:"toilet",   name:"Toilet",    color:"#2d9cdb" },
+  { id:"mainexit", name:"Main Exit", color:"#eb5757" },
+  { id:"sideexit", name:"Side Exit", color:"#27ae60" },
 ];
 /* ================================================================== */
 
 function floorplanSVG(){
-  const room=(x)=>`<rect x='${x}' y='28' width='97' height='414' rx='9' fill='#edf2f6'/>`;
-  const desk=(x,y)=>`<rect x='${x}' y='${y}' width='34' height='26' rx='4' fill='#fff' stroke='#dbe3ea'/>`;
-  const accent=(x,c)=>`<rect x='${x}' y='30' width='93' height='4' rx='2' fill='${c}'/>`;
+  const room=(x,w)=>`<rect x='${x}' y='44' width='${w}' height='234' rx='8' fill='#edf2f6'/>`;
+  const tbl=(x,y)=>`<rect x='${x}' y='${y}' width='30' height='22' rx='4' fill='#fff' stroke='#dbe3ea'/>`;
   return `<svg xmlns='http://www.w3.org/2000/svg' width='${W}' height='${H}' viewBox='0 0 ${W} ${H}'>
     <rect width='${W}' height='${H}' fill='#e9eef2'/>
-    <rect x='25' y='26' width='316' height='426' rx='16' fill='#000' opacity='0.05'/>
-    <rect x='22' y='22' width='316' height='426' rx='16' fill='#ffffff' stroke='#e0e7ec' stroke-width='1.5'/>
-    ${room(28)}<rect x='131' y='28' width='102' height='414' rx='9' fill='#edf2f6'/>${room(239)}
-    ${accent(30,'#27ae60')}${accent(134,'#00AEEF')}${accent(240,'#7b61ff')}
-    <text x='76'  y='52' text-anchor='middle' font-family='Arial' font-size='10' font-weight='700' fill='#6b7c8a' letter-spacing='0.5'>RECEPTION</text>
-    <text x='182' y='52' text-anchor='middle' font-family='Arial' font-size='10' font-weight='700' fill='#6b7c8a' letter-spacing='0.5'>WORK AREA</text>
-    <text x='285' y='52' text-anchor='middle' font-family='Arial' font-size='10' font-weight='700' fill='#6b7c8a' letter-spacing='0.5'>MEETING</text>
+    <line x1='0' y1='20' x2='440' y2='20' stroke='#cbd6de' stroke-width='2'/>
+    <rect x='27' y='47' width='392' height='234' rx='12' fill='#000' opacity='0.05'/>
+    <rect x='24' y='44' width='392' height='234' rx='12' fill='#ffffff' stroke='#e0e7ec' stroke-width='1.5'/>
+    ${room(28,122)}${room(158,124)}${room(290,122)}
+    <rect x='30'  y='46' width='118' height='4' rx='2' fill='#f2994a'/>
+    <rect x='160' y='46' width='120' height='4' rx='2' fill='#00AEEF'/>
+    <rect x='292' y='46' width='118' height='4' rx='2' fill='#7b61ff'/>
+    <text x='88'  y='118' text-anchor='middle' font-family='Arial' font-size='11' font-weight='700' fill='#6b7c8a'>CAFETERIA</text>
+    <text x='220' y='118' text-anchor='middle' font-family='Arial' font-size='11' font-weight='700' fill='#6b7c8a'>RECEPTION</text>
+    <text x='350' y='118' text-anchor='middle' font-family='Arial' font-size='11' font-weight='700' fill='#6b7c8a'>TECH ROOM</text>
     <g stroke='#cbd6de' stroke-width='2.5' stroke-linecap='round'>
-      <line x1='128' y1='30' x2='128' y2='200'/><line x1='128' y1='250' x2='128' y2='440'/>
-      <line x1='236' y1='30' x2='236' y2='200'/><line x1='236' y1='250' x2='236' y2='440'/>
+      <line x1='154' y1='46' x2='154' y2='150'/><line x1='154' y1='190' x2='154' y2='276'/>
+      <line x1='286' y1='46' x2='286' y2='150'/><line x1='286' y1='190' x2='286' y2='276'/>
     </g>
-    <rect x='42' y='300' width='66' height='20' rx='6' fill='#fff' stroke='#dbe3ea'/>
-    ${desk(145,96)}${desk(188,96)}${desk(145,156)}${desk(188,156)}
-    <rect x='252' y='150' width='64' height='108' rx='10' fill='#fff' stroke='#dbe3ea'/>
-    <rect x='52' y='442' width='44' height='7' rx='3.5' fill='#27ae60'/>
-    <text x='74' y='462' text-anchor='middle' font-family='Arial' font-size='9' font-weight='700' fill='#8497a6'>ENTRANCE</text>
+    <rect x='168' y='44' width='50' height='34' rx='3' fill='#eaf1f5' stroke='#cbd6de'/>
+    <text x='193' y='65' text-anchor='middle' font-family='Arial' font-size='8' font-weight='700' fill='#5f7284'>TOILET</text>
+    <rect x='232' y='41' width='52' height='6' rx='3' fill='#eb5757'/><text x='258' y='34' text-anchor='middle' font-family='Arial' font-size='8.5' font-weight='700' fill='#c0392b'>EXIT / IN</text>
+    <rect x='21' y='140' width='6' height='40' rx='3' fill='#27ae60'/><text x='38' y='134' font-family='Arial' font-size='8.5' font-weight='700' fill='#1e8449'>EXIT / IN</text>
+    ${tbl(50,150)}${tbl(96,150)}${tbl(50,196)}${tbl(96,196)}
+    <rect x='190' y='150' width='60' height='24' rx='6' fill='#fff' stroke='#dbe3ea'/>
+    <rect x='300' y='142' width='40' height='92' rx='6' fill='#fff' stroke='#dbe3ea'/><rect x='352' y='142' width='40' height='92' rx='6' fill='#fff' stroke='#dbe3ea'/>
   </svg>`;
 }
 
@@ -197,22 +208,22 @@ function initMap(){
   L.imageOverlay('data:image/svg+xml,'+encodeURIComponent(floorplanSVG()), bounds).addTo(map);
   map.fitBounds(bounds); overZoom=map.getZoom(); map.setMaxBounds(L.latLngBounds(bounds).pad(0.5));
 
-  hi=L.rectangle(zb("work"), {color:"#00AEEF", weight:2.5, fillColor:"#00AEEF", fillOpacity:0.14}).addTo(map);
+  hi=L.rectangle(zb("cafeteria"), {color:"#00AEEF", weight:2.5, fillColor:"#00AEEF", fillOpacity:0.14}).addTo(map);
   casing=L.polyline([], {color:"#fff", weight:9, opacity:.95, lineCap:"round", lineJoin:"round"}).addTo(map);
   routeLine=L.polyline([], {color:"#00AEEF", weight:5, lineCap:"round", lineJoin:"round"}).addTo(map);
   poiLayer=L.layerGroup().addTo(map);
   POIS.forEach(p=>{ const m=L.marker(P(NODES[p.id].x,NODES[p.id].y), {icon:pinIcon(p.color)}).addTo(poiLayer);
     m.bindTooltip(p.name,{permanent:true,direction:"top",offset:[0,-24],className:"lbl"}); m.on("click",()=>chooseDest(p.id)); });
-  loc=L.marker(P(182,235), {icon:L.divIcon({className:"", html:'<div class="loc"><div class="loc-halo"></div><div class="loc-cone" id="locCone"><svg width="64" height="64" viewBox="0 0 64 64"><path d="M32 30 L21 3 Q32 -3 43 3 Z" fill="rgba(0,174,239,0.4)"/></svg></div><div class="loc-dot"></div></div>', iconSize:[64,64], iconAnchor:[32,32]}), interactive:false, zIndexOffset:1000}).addTo(map);
+  loc=L.marker(P(88,170), {icon:L.divIcon({className:"", html:'<div class="loc"><div class="loc-halo"></div><div class="loc-cone" id="locCone"><svg width="64" height="64" viewBox="0 0 64 64"><path d="M32 30 L21 3 Q32 -3 43 3 Z" fill="rgba(0,174,239,0.4)"/></svg></div><div class="loc-dot"></div></div>', iconSize:[64,64], iconAnchor:[32,32]}), interactive:false, zIndexOffset:1000}).addTo(map);
   setTimeout(()=>{ locConeEl=document.getElementById('locCone'); }, 300);
 
   map.on('dragstart zoomstart', ()=>setFollow(false));
-  const refit=()=>{ map.invalidateSize(); map.setView(P(182,235), overZoom+1); };
+  const refit=()=>{ map.invalidateSize(); map.setView(P(88,170), overZoom+1); };
   setTimeout(refit,250); setTimeout(refit,700); window.addEventListener('resize',()=>map.invalidateSize());
 }
 function zb(z){ const r=ZONES[z].rect; return L.latLngBounds(P(r[0],r[1]), P(r[2],r[3])); }
 function setFollow(on){ follow=on; $("recenter").classList.toggle("on",on); }
-$("recenter").onclick=()=>{ setFollow(true); const z=committedZone||"work"; map.setView(P(ZONES[z].cx,ZONES[z].cy), overZoom+1, {animate:true}); };
+$("recenter").onclick=()=>{ setFollow(true); const z=committedZone||"cafeteria"; map.setView(P(ZONES[z].cx,ZONES[z].cy), overZoom+1, {animate:true}); };
 
 /* destinations: chips + search */
 POIS.forEach(p=>{ const c=document.createElement("button"); c.className="chip"; c.dataset.id=p.id;
