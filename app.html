@@ -196,7 +196,7 @@ const $=id=>document.getElementById(id);
 let map,P,bounds,overZoom,hi,loc,locConeEl,casing,routeLine,destMarker,poiLayer;
 const MAP_NORTH_OFFSET = 0; // degrees to align the cone with the floor plan's real north (set once we know the venue's orientation)
 let analyser,freqData,srHz,binHz;
-let committedZone=null,candidate=null,candCount=0,lastHeard=0,destPoi=null,follow=true;
+let committedZone=null,candidate=null,candCount=0,lastHeard=0,destPoi=null,follow=true,placed=false;
 const PROMINENCE=12,ABS_FLOOR=-95,LEAD_DB=3,COMMIT_FRAMES=22,HOLD_MS=3500;
 
 function pinIcon(c){ return L.divIcon({className:"", html:`<div class="pin" style="--c:${c}"><b></b><i></i></div>`, iconSize:[26,26], iconAnchor:[13,26]}); }
@@ -208,14 +208,13 @@ function initMap(){
   L.imageOverlay('data:image/svg+xml,'+encodeURIComponent(floorplanSVG()), bounds).addTo(map);
   map.fitBounds(bounds); overZoom=map.getZoom(); map.setMaxBounds(L.latLngBounds(bounds).pad(0.5));
 
-  hi=L.rectangle(zb("reception"), {color:"#00AEEF", weight:2.5, fillColor:"#00AEEF", fillOpacity:0.14}).addTo(map);
+  hi=L.rectangle(zb("reception"), {color:"#00AEEF", weight:2.5, fillColor:"#00AEEF", fillOpacity:0.14});  // added only once a beacon is heard
   casing=L.polyline([], {color:"#fff", weight:9, opacity:.95, lineCap:"round", lineJoin:"round"}).addTo(map);
   routeLine=L.polyline([], {color:"#00AEEF", weight:5, lineCap:"round", lineJoin:"round"}).addTo(map);
   poiLayer=L.layerGroup().addTo(map);
   POIS.forEach(p=>{ const m=L.marker(P(NODES[p.id].x,NODES[p.id].y), {icon:pinIcon(p.color)}).addTo(poiLayer);
     m.bindTooltip(p.name,{permanent:true,direction:"top",offset:[0,-24],className:"lbl"}); m.on("click",()=>chooseDest(p.id)); });
-  loc=L.marker(P(220,178), {icon:L.divIcon({className:"", html:'<div class="loc"><div class="loc-halo"></div><div class="loc-cone" id="locCone"><svg width="64" height="64" viewBox="0 0 64 64"><path d="M32 30 L21 3 Q32 -3 43 3 Z" fill="rgba(0,174,239,0.4)"/></svg></div><div class="loc-dot"></div></div>', iconSize:[64,64], iconAnchor:[32,32]}), interactive:false, zIndexOffset:1000}).addTo(map);
-  setTimeout(()=>{ locConeEl=document.getElementById('locCone'); }, 300);
+  loc=L.marker(P(220,178), {icon:L.divIcon({className:"", html:'<div class="loc"><div class="loc-halo"></div><div class="loc-cone" id="locCone"><svg width="64" height="64" viewBox="0 0 64 64"><path d="M32 30 L21 3 Q32 -3 43 3 Z" fill="rgba(0,174,239,0.4)"/></svg></div><div class="loc-dot"></div></div>', iconSize:[64,64], iconAnchor:[32,32]}), interactive:false, zIndexOffset:1000});  // shown only once a beacon is heard
 
   map.on('dragstart zoomstart', ()=>setFollow(false));
   const refit=()=>{ map.invalidateSize(); map.setView(P(220,178), overZoom+1); };
@@ -260,6 +259,7 @@ function drawRoute(frame){
 $("navClear").onclick=()=>{ destPoi=null; $("search").value=""; $("searchClear").hidden=true; document.querySelectorAll(".chip").forEach(c=>c.classList.remove("sel")); drawRoute(false); };
 
 function setZone(z){ committedZone=z; const zn=ZONES[z];
+  if(!placed){ hi.addTo(map); loc.addTo(map); placed=true; setTimeout(()=>{ locConeEl=document.getElementById('locCone'); }, 60); }
   loc.setLatLng(P(zn.cx,zn.cy)); hi.setBounds(zb(z));
   $("statusText").textContent="You're in "+zn.name; $("hereZone").textContent=zn.name; $("hereHint").textContent="You are here";
   if(follow) map.panTo(P(zn.cx,zn.cy), {animate:true});
