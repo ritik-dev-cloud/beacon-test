@@ -146,7 +146,7 @@ const EDGES = {
 };
 const POIS = [
   { id:"toilet",   name:"Toilet",    color:"#2d9cdb" },
-  { id:"mainexit", name:"Main Exit", color:"#eb5757" },
+  { id:"mainexit", name:"Main Entrance", color:"#eb5757" },
   { id:"sideexit", name:"Side Exit", color:"#27ae60" },
 ];
 /* ================================================================== */
@@ -208,22 +208,22 @@ function initMap(){
   L.imageOverlay('data:image/svg+xml,'+encodeURIComponent(floorplanSVG()), bounds).addTo(map);
   map.fitBounds(bounds); overZoom=map.getZoom(); map.setMaxBounds(L.latLngBounds(bounds).pad(0.5));
 
-  hi=L.rectangle(zb("cafeteria"), {color:"#00AEEF", weight:2.5, fillColor:"#00AEEF", fillOpacity:0.14}).addTo(map);
+  hi=L.rectangle(zb("reception"), {color:"#00AEEF", weight:2.5, fillColor:"#00AEEF", fillOpacity:0.14}).addTo(map);
   casing=L.polyline([], {color:"#fff", weight:9, opacity:.95, lineCap:"round", lineJoin:"round"}).addTo(map);
   routeLine=L.polyline([], {color:"#00AEEF", weight:5, lineCap:"round", lineJoin:"round"}).addTo(map);
   poiLayer=L.layerGroup().addTo(map);
   POIS.forEach(p=>{ const m=L.marker(P(NODES[p.id].x,NODES[p.id].y), {icon:pinIcon(p.color)}).addTo(poiLayer);
     m.bindTooltip(p.name,{permanent:true,direction:"top",offset:[0,-24],className:"lbl"}); m.on("click",()=>chooseDest(p.id)); });
-  loc=L.marker(P(88,170), {icon:L.divIcon({className:"", html:'<div class="loc"><div class="loc-halo"></div><div class="loc-cone" id="locCone"><svg width="64" height="64" viewBox="0 0 64 64"><path d="M32 30 L21 3 Q32 -3 43 3 Z" fill="rgba(0,174,239,0.4)"/></svg></div><div class="loc-dot"></div></div>', iconSize:[64,64], iconAnchor:[32,32]}), interactive:false, zIndexOffset:1000}).addTo(map);
+  loc=L.marker(P(220,178), {icon:L.divIcon({className:"", html:'<div class="loc"><div class="loc-halo"></div><div class="loc-cone" id="locCone"><svg width="64" height="64" viewBox="0 0 64 64"><path d="M32 30 L21 3 Q32 -3 43 3 Z" fill="rgba(0,174,239,0.4)"/></svg></div><div class="loc-dot"></div></div>', iconSize:[64,64], iconAnchor:[32,32]}), interactive:false, zIndexOffset:1000}).addTo(map);
   setTimeout(()=>{ locConeEl=document.getElementById('locCone'); }, 300);
 
   map.on('dragstart zoomstart', ()=>setFollow(false));
-  const refit=()=>{ map.invalidateSize(); map.setView(P(88,170), overZoom+1); };
+  const refit=()=>{ map.invalidateSize(); map.setView(P(220,178), overZoom+1); };
   setTimeout(refit,250); setTimeout(refit,700); window.addEventListener('resize',()=>map.invalidateSize());
 }
 function zb(z){ const r=ZONES[z].rect; return L.latLngBounds(P(r[0],r[1]), P(r[2],r[3])); }
 function setFollow(on){ follow=on; $("recenter").classList.toggle("on",on); }
-$("recenter").onclick=()=>{ setFollow(true); const z=committedZone||"cafeteria"; map.setView(P(ZONES[z].cx,ZONES[z].cy), overZoom+1, {animate:true}); };
+$("recenter").onclick=()=>{ setFollow(true); const z=committedZone||"reception"; map.setView(P(ZONES[z].cx,ZONES[z].cy), overZoom+1, {animate:true}); };
 
 /* destinations: chips + search */
 POIS.forEach(p=>{ const c=document.createElement("button"); c.className="chip"; c.dataset.id=p.id;
