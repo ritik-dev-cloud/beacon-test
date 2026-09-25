@@ -67,7 +67,16 @@ const LEAD_DB    = 3;    // winner must lead the runner-up by this much (anti-fl
 let analyser, freqData, srHz, binHz, curZone=null;
 const $ = id => document.getElementById(id);
 const lines=[]; const t0=performance.now();
-function log(m){ lines.push('['+((performance.now()-t0)/1000).toFixed(1)+'s] '+m); $('log').value=lines.join('\n'); $('log').scrollTop=1e9; }
+/* ---- ship every log line to the Cloudflare Worker (live, no copy-paste) ---- */
+const LOG_URL="https://beacon-logs.ritik-beacon-4821.workers.dev/log";
+const LOG_TOKEN="cm-beacon-2026";
+const DEVICE=(()=>{ const u=navigator.userAgent;
+  if(/iPhone|iPad|iPod/.test(u)) return ("iPhone "+((u.match(/OS (\d+[_.]\d+)/)||[])[1]||"").replace('_','.'));
+  if(/Android/.test(u))          return ("Android "+((u.match(/Android (\d+(?:\.\d+)?)/)||[])[1]||""));
+  return "phone"; })().trim();
+function postLog(m){ try{ fetch(LOG_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({token:LOG_TOKEN,device:DEVICE,line:m}),keepalive:true}).catch(()=>{}); }catch(e){} }
+function log(m){ lines.push('['+((performance.now()-t0)/1000).toFixed(1)+'s] '+m); $('log').value=lines.join('\n'); $('log').scrollTop=1e9; postLog(m); }
 
 $('copy').addEventListener('click', ()=>{ const t=lines.join('\n');
   (navigator.clipboard?.writeText(t) || Promise.reject()).then(()=>{$('copy').textContent='Copied ✓';setTimeout(()=>$('copy').textContent='Copy',1200);})
