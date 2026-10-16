@@ -59,12 +59,17 @@
 const BEACONS = [
   { id:"Z1", name:"Cafeteria",       freq:18000, color:"#3fb950" },
   { id:"Z2", name:"Tech Department", freq:19000, color:"#d29922" },
+  { id:"Z3", name:"Reception",       freq:20000, color:"#a371f7" },
 ];
 const PROMINENCE = 12;   // dB a tone must stand above the noise floor to count
-const ABS_FLOOR  = -95;
-const LEAD_DB    = 3;    // winner must lead the runner-up by this much (anti-flicker)
+const ABS_FLOOR  = -100;  // hard floor (lowered to hold onto a weak / far signal)
+const LEAD_DB    = 6;    // winner must lead the runner-up by this much (anti-flicker)
+const CONFIRM    = 6;    // winner must hold for this many frames before we switch zones (anti-misfire)
+const HOLD_MS    = 2500; // keep showing a zone this long after its last detection (anti-flicker)
 
 let analyser, freqData, srHz, binHz, curZone=null;
+let heldZone=null, heldName='', lastSeenT=0;
+let pendingId=null, pendingCount=0;   // a candidate zone must repeat CONFIRM times before we switch
 const $ = id => document.getElementById(id);
 const lines=[]; const t0=performance.now();
 /* ---- ship every log line to the Cloudflare Worker (live, no copy-paste) ---- */
@@ -125,12 +130,27 @@ function loop(){
   }
 
   let zoneEl=$('zone');
-  if(best && (bestDb-second>=LEAD_DB || second<=-900)){
-    if(curZone!==best.id){ curZone=best.id; log('NEAR '+best.name+' ('+bestDb.toFixed(0)+' dB)'); }
-    zoneEl.textContent=best.name; zoneEl.className='zone on';
-    $('bar-'+best.id).classList.add('win');
-  } else if(!best){
-    if(curZone!==null){ curZone=null; log('no beacon heard'); }
+  const now=performance.now();
+  const winner = (best && (bestDb-second>=LEAD_DB || second<=-900)) ? best : null;
+
+  // Only commit a zone change after the same winner repeats CONFIRM frames (kills transient misfires).
+  if(winner){
+    if(winner.id===heldZone){ lastSeenT=now; pendingId=null; pendingCount=0; }          // same zone, refresh
+    else {
+      if(pendingId===winner.id) pendingCount++; else { pendingId=winner.id; pendingCount=1; }
+      if(!heldZone || pendingCount>=CONFIRM){                                            // confirmed switch (or first lock)
+        heldZone=winner.id; heldName=winner.name; lastSeenT=now; pendingId=null; pendingCount=0;
+      }
+    }
+  }
+  const holding = heldZone && (now-lastSeenT < HOLD_MS);   // ride through brief dropouts
+
+  if(holding){
+    if(curZone!==heldZone){ curZone=heldZone; log('NEAR '+heldName+' ('+bestDb.toFixed(0)+' dB)'); }
+    zoneEl.textContent=heldName; zoneEl.className='zone on';
+    const el=$('bar-'+heldZone); if(el) el.classList.add('win');
+  } else {
+    if(curZone!==null){ curZone=null; heldZone=null; pendingId=null; pendingCount=0; log('no beacon heard'); }
     zoneEl.textContent='— searching —'; zoneEl.className='zone off';
   }
   requestAnimationFrame(loop);
