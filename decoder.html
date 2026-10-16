@@ -61,11 +61,12 @@ const BEACONS = [
   { id:"Z2", name:"Tech Department", freq:19000, color:"#d29922" },
   { id:"Z3", name:"Reception",       freq:17000, color:"#a371f7" },
 ];
-const PROMINENCE = 12;   // dB a tone must stand above the noise floor to count
+const PROMINENCE = 12;   // dB to ACQUIRE a zone (tone must stand this far above noise)
+const HOLD_PROM  = 5;    // dB to KEEP a locked zone alive — low = sticky = continuous display
 const ABS_FLOOR  = -100;  // hard floor (lowered to hold onto a weak / far signal)
 const LEAD_DB    = 6;    // winner must lead the runner-up by this much (anti-flicker)
-const CONFIRM    = 6;    // winner must hold for this many frames before we switch zones (anti-misfire)
-const HOLD_MS    = 2500; // keep showing a zone this long after its last detection (anti-flicker)
+const CONFIRM    = 6;    // frames a new zone must win before we switch (anti-misfire)
+const HOLD_MS    = 6000; // keep showing a locked zone this long after it truly drops (ride through nulls)
 
 let analyser, freqData, srHz, binHz, curZone=null;
 let heldZone=null, heldName='', lastSeenT=0;
@@ -120,7 +121,8 @@ function loop(){
   let best=null, bestDb=-999, second=-999;
   for(const b of BEACONS){
     const db=peak(b.freq);
-    const present=(db>floor+PROMINENCE)&&(db>ABS_FLOOR);
+    b._db=db; b._prom=db-floor;                       // remember for the sustain check below
+    const present=(b._prom>=PROMINENCE)&&(db>ABS_FLOOR);
     // bar: map (floor .. floor+50) -> 0..100%
     const pct=Math.max(0,Math.min(100, (db-floor)/50*100));
     $('fill-'+b.id).style.width = pct+'%';
@@ -143,6 +145,11 @@ function loop(){
       }
     }
   }
+  // SUSTAIN: keep the locked zone alive while it still clears the lower HOLD prominence —
+  // this is what makes detection continuous through standing-wave nulls.
+  const heldB = heldZone ? BEACONS.find(b=>b.id===heldZone) : null;
+  if(heldB && heldB._prom>=HOLD_PROM && heldB._db>ABS_FLOOR) lastSeenT=now;
+
   const holding = heldZone && (now-lastSeenT < HOLD_MS);   // ride through brief dropouts
 
   if(holding){
