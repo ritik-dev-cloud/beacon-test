@@ -71,6 +71,7 @@ const HOLD_MS    = 6000; // keep showing a locked zone this long after it truly 
 let analyser, freqData, srHz, binHz, curZone=null;
 let heldZone=null, heldName='', lastSeenT=0;
 let pendingId=null, pendingCount=0;   // a candidate zone must repeat CONFIRM times before we switch
+let lastScan=0;                        // throttle for the diagnostic raw-spectrum log
 const $ = id => document.getElementById(id);
 const lines=[]; const t0=performance.now();
 /* ---- ship every log line to the Cloudflare Worker (live, no copy-paste) ---- */
@@ -117,6 +118,15 @@ function peak(f){ const h=120,lo=Math.max(0,Math.floor((f-h)/binHz)),hi=Math.min
 function loop(){
   analyser.getFloatFrequencyData(freqData);
   const floor=median(); $('floor').textContent=floor.toFixed(0)+' dB';
+
+  // --- DIAGNOSTIC: every 2s log the dominant ultrasonic peak + each zone's raw dB ---
+  const nowS=performance.now();
+  if(nowS-lastScan>2000){
+    lastScan=nowS;
+    let pf=0,pd=-999; const lo=Math.floor(16000/binHz),hi=Math.min(freqData.length-1,Math.ceil(21000/binHz));
+    for(let i=lo;i<=hi;i++) if(freqData[i]>pd){pd=freqData[i];pf=i*binHz;}
+    log('SCAN peak '+(pf/1000).toFixed(2)+'k@'+pd.toFixed(0)+' | 17k '+peak(17000).toFixed(0)+' 18k '+peak(18000).toFixed(0)+' 19k '+peak(19000).toFixed(0)+' | floor '+floor.toFixed(0));
+  }
 
   let best=null, bestDb=-999, second=-999;
   for(const b of BEACONS){
