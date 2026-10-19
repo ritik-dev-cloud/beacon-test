@@ -61,12 +61,14 @@ const BEACONS = [
   { id:"Z2", name:"Tech Department", freq:19000, color:"#d29922" },
   { id:"Z3", name:"Reception",       freq:17000, color:"#a371f7" },
 ];
-const PROMINENCE = 12;   // dB to ACQUIRE a zone (tone must stand this far above noise)
-const HOLD_PROM  = 5;    // dB to KEEP a locked zone alive — low = sticky = continuous display
+// A real clean beacon tone stands 25-40 dB above the noise floor; broadband room noise
+// tops out ~15 dB. So thresholds sit ABOVE noise and BELOW a real tone -> no false zones.
+const PROMINENCE = 18;   // dB to ACQUIRE a zone (rejects noise, which maxes ~15 dB)
+const HOLD_PROM  = 12;   // dB to KEEP a locked zone alive (still above noise, rides real nulls)
 const ABS_FLOOR  = -100;  // hard floor (lowered to hold onto a weak / far signal)
 const LEAD_DB    = 6;    // winner must lead the runner-up by this much (anti-flicker)
 const CONFIRM    = 6;    // frames a new zone must win before we switch (anti-misfire)
-const HOLD_MS    = 6000; // keep showing a locked zone this long after it truly drops (ride through nulls)
+const HOLD_MS    = 4000; // keep showing a locked zone this long after it truly drops (ride through nulls)
 
 let analyser, freqData, srHz, binHz, curZone=null;
 let heldZone=null, heldName='', lastSeenT=0;
@@ -163,7 +165,7 @@ function loop(){
   const holding = heldZone && (now-lastSeenT < HOLD_MS);   // ride through brief dropouts
 
   if(holding){
-    if(curZone!==heldZone){ curZone=heldZone; log('NEAR '+heldName+' ('+bestDb.toFixed(0)+' dB)'); }
+    if(curZone!==heldZone){ const hb=BEACONS.find(b=>b.id===heldZone); curZone=heldZone; log('NEAR '+heldName+' ('+(hb?hb._db:bestDb).toFixed(0)+' dB)'); }
     zoneEl.textContent=heldName; zoneEl.className='zone on';
     const el=$('bar-'+heldZone); if(el) el.classList.add('win');
   } else {
